@@ -3,8 +3,3 @@ kind: RuntimeClass
 metadata:
   name: gvisor
 handler: runsc
-scheduling:
-  nodeClassification:
-    tolerations:
-      - key: "node.kubernetes.io/not-ready"
-        operator: "Exists"
