@@ -11,4 +11,6 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: kubevirt
+    - name: kubevirt-config
+  timeout: 10m
+  wait: true
