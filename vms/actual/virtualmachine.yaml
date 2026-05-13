@@ -1,0 +1,118 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: actual
+  namespace: vms
+  labels:
+    app.kubernetes.io/name: actual
+    app.kubernetes.io/part-of: kubevirt-migration
+  annotations:
+    homelab.telometto.io/migration-source: nix-config/vms/actual.nix
+    homelab.telometto.io/original-microvm-ip: 10.100.0.51
+    homelab.telometto.io/original-service-port: '11051'
+spec:
+  runStrategy: Halted
+  dataVolumeTemplates:
+    - metadata:
+        name: actual-rootdisk
+        labels:
+          app.kubernetes.io/name: actual
+          app.kubernetes.io/part-of: kubevirt-migration
+      spec:
+        source:
+          http:
+            url: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2
+        storage:
+          storageClassName: kubevirt-local
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: actual
+        app.kubernetes.io/part-of: kubevirt-migration
+        vm.kubevirt.io/name: actual
+        kubevirt.io/domain: actual
+    spec:
+      terminationGracePeriodSeconds: 180
+      domain:
+        machine:
+          type: q35
+        cpu:
+          cores: 1
+        resources:
+          requests:
+            memory: 1Gi
+        devices:
+          disks:
+            - name: rootdisk
+              disk:
+                bus: virtio
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+          interfaces:
+            - name: default
+              masquerade: {}
+              ports:
+                - name: http
+                  port: 11051
+                  protocol: TCP
+      networks:
+        - name: default
+          pod: {}
+      volumes:
+        - name: rootdisk
+          dataVolume:
+            name: actual-rootdisk
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            userData: |
+              #cloud-config
+              package_update: true
+              package_upgrade: true
+              ssh_pwauth: false
+              disable_root: true
+              users:
+                - default
+                - name: admin
+                  gecos: Homelab admin
+                  groups: sudo
+                  lock_passwd: true
+                  shell: /bin/bash
+                  sudo: ALL=(ALL) ALL
+              packages:
+                - podman
+                - qemu-guest-agent
+                - ufw
+              write_files:
+                - path: /etc/systemd/system/actual-server.service
+                  owner: root:root
+                  permissions: '0644'
+                  content: |
+                    [Unit]
+                    Description=Actual Budget server
+                    Wants=network-online.target
+                    After=network-online.target
+
+                    [Service]
+                    Restart=always
+                    RestartSec=5s
+                    ExecStartPre=-/usr/bin/podman pull docker.io/actualbudget/actual-server:latest
+                    ExecStart=/usr/bin/podman run --rm --name actual-server --publish 0.0.0.0:11051:5006 --volume /srv/actual:/data:Z docker.io/actualbudget/actual-server:latest
+                    ExecStop=-/usr/bin/podman stop -t 30 actual-server
+
+                    [Install]
+                    WantedBy=multi-user.target
+              runcmd:
+                - [systemctl, enable, --now, qemu-guest-agent]
+                - [mkdir, -p, /srv/actual]
+                - [ufw, default, deny, incoming]
+                - [ufw, default, allow, outgoing]
+                - [ufw, allow, 11051/tcp]
+                - [ufw, --force, enable]
+                - [systemctl, daemon-reload]
+                - [systemctl, enable, --now, actual-server.service]
