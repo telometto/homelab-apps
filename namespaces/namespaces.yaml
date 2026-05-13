@@ -3,31 +3,10 @@ kind: Namespace
 metadata:
   name: vms
   labels:
-    pod-security.kubernetes.io/enforce: baseline
-    pod-security.kubernetes.io/warn: restricted
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: media
-  labels:
-    pod-security.kubernetes.io/enforce: baseline
-    pod-security.kubernetes.io/warn: restricted
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: apps
-  labels:
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/warn: restricted
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: internal
-  labels:
-    pod-security.kubernetes.io/enforce: baseline
+    # KubeVirt virt-launcher pods need privileged pod security to access KVM.
+    # Workload isolation is provided by the VM boundary plus NetworkPolicies.
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
 ---
 apiVersion: v1
@@ -36,3 +15,5 @@ metadata:
   name: ingress
   labels:
     pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
