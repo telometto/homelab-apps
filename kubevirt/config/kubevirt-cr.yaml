@@ -10,8 +10,7 @@ spec:
         - HotplugVolumes
         - HostDisk
         - Sidecar
-    machineType: "q35"
+    machineType: q35
   workloadUpdateStrategy:
     workloadUpdateMethods:
-      - LiveMigrate
       - Evict
