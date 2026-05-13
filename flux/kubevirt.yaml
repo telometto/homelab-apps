@@ -12,3 +12,5 @@ spec:
     name: flux-system
   dependsOn:
     - name: namespaces
+  timeout: 10m
+  wait: true
