@@ -12,23 +12,6 @@ metadata:
     homelab.telometto.io/original-service-port: '11051'
 spec:
   runStrategy: Halted
-  dataVolumeTemplates:
-    - metadata:
-        name: actual-rootdisk
-        labels:
-          app.kubernetes.io/name: actual
-          app.kubernetes.io/part-of: kubevirt-migration
-      spec:
-        source:
-          http:
-            url: https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2
-        storage:
-          storageClassName: kubevirt-local
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 20Gi
   template:
     metadata:
       labels:
@@ -83,7 +66,7 @@ spec:
                   groups: sudo
                   lock_passwd: true
                   shell: /bin/bash
-                  sudo: ALL=(ALL) ALL
+                  sudo: ALL=(ALL) NOPASSWD:ALL
               packages:
                 - podman
                 - qemu-guest-agent
