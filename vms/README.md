@@ -5,6 +5,7 @@ This directory contains KubeVirt VM manifests for the MicroVM migration.
 ## Current state
 
 - `inventory-configmap.yaml` records the 24 legacy MicroVMs from `nix-config/vms/vm-registry.nix` for migration tracking.
+- `flaresolverr` is tracked in the registry inventory but is not currently enabled as a standalone MicroVM; it runs embedded in the legacy `prowlarr` MicroVM and should only become a standalone KubeVirt VM after that split is deliberate.
 - `actual/` is the first pilot VM. It has a standalone `DataVolume` using `kubevirt-local-immediate` so the Debian cloud image can import before the VM starts.
 - The `actual` VM is intentionally `runStrategy: Manual` so Flux can reconcile the object without auto-starting it or reverting `virtctl start`.
 
