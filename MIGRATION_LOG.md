@@ -10,3 +10,4 @@
 - Added `vms/actual` as a manual-control KubeVirt pilot VM using a Debian cloud image
 - Split the `actual` boot image import into a standalone `DataVolume` on `kubevirt-local-immediate` so CDI can import before the VM is manually started
 - Added `docs/actual-pilot-deployment.md` as the step-by-step pilot deployment runbook
+- Documented the required delete/recreate cleanup when an earlier pilot revision already created immutable `actual-rootdisk` PV/PVC resources with `kubevirt-local`

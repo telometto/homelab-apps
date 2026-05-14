@@ -11,6 +11,7 @@ This directory contains KubeVirt VM manifests for the MicroVM migration.
 ## Pilot workflow
 
 1. Apply the matching `nix-config` change on `blizzard` so tmpfiles creates `/flash/enc/kubevirt/actual/rootdisk`.
+1. If an earlier pilot revision already created `actual-rootdisk` with `kubevirt-local`, follow the upgrade cleanup in `docs/actual-pilot-deployment.md` before reconciling this revision.
 1. Let Flux reconcile `storage`, `kubevirt-config`, `cdi-config`, and `vms`.
 1. Confirm `PersistentVolume/actual-rootdisk`, `PersistentVolumeClaim/actual-rootdisk`, and `DataVolume/actual-rootdisk` are bound/imported.
 1. Start the VM only when ready:
