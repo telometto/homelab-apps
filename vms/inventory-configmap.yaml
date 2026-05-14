@@ -28,7 +28,7 @@ data:
       firefox: { port: 11052, memory: 4Gi, cpu: 4, publicHosts: [ff], enabledInMicrovm: true, vpnRouted: true }
       wireguard: { port: 56943, memory: 512Mi, cpu: 1, publicHosts: [], enabledInMicrovm: true, rawUdp: true }
       sabnzbd: { port: 11031, memory: 1Gi, cpu: 1, publicHosts: [sab], enabledInMicrovm: true, vpnRouted: true }
-      flaresolverr: { port: 11013, memory: 512Mi, cpu: 1, publicHosts: [], enabledInMicrovm: true }
+      flaresolverr: { port: 11013, memory: 512Mi, cpu: 1, publicHosts: [], enabledInMicrovm: false, embeddedIn: prowlarr }
       matrix-synapse: { port: 11060, memory: 4Gi, cpu: 4, publicHosts: [matrix, apex], enabledInMicrovm: true }
       paperless: { port: 11061, memory: 8Gi, cpu: 4, publicHosts: [docs], enabledInMicrovm: false }
       firefly: { port: 11062, memory: 2Gi, cpu: 2, publicHosts: [finance], enabledInMicrovm: true }
