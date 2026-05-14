@@ -11,7 +11,7 @@ metadata:
     homelab.telometto.io/original-microvm-ip: 10.100.0.51
     homelab.telometto.io/original-service-port: '11051'
 spec:
-  runStrategy: Halted
+  runStrategy: Manual
   template:
     metadata:
       labels:
