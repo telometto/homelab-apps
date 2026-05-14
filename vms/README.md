@@ -5,8 +5,8 @@ This directory contains KubeVirt VM manifests for the MicroVM migration.
 ## Current state
 
 - `inventory-configmap.yaml` records the 24 legacy MicroVMs from `nix-config/vms/vm-registry.nix` for migration tracking.
-- `actual/` is the first pilot VM. It has a standalone `DataVolume` so the Debian cloud image can import while the VM remains halted.
-- The `actual` VM is intentionally `runStrategy: Halted` so Flux can reconcile the object without cutting over traffic.
+- `actual/` is the first pilot VM. It has a standalone `DataVolume` using `kubevirt-local-immediate` so the Debian cloud image can import before the VM starts.
+- The `actual` VM is intentionally `runStrategy: Manual` so Flux can reconcile the object without auto-starting it or reverting `virtctl start`.
 
 ## Pilot workflow
 
