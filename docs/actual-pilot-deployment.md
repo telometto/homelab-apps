@@ -65,6 +65,43 @@ Expected:
 - `kubevirt-config` and `cdi-config` Kustomizations are ready.
 - KubeVirt and CDI report available/ready status.
 
+## Upgrade from earlier pilot manifests
+
+Skip this section on a fresh cluster. Run it only if an earlier revision of this
+pilot already created `actual-rootdisk` with the `kubevirt-local` StorageClass.
+Kubernetes does not allow changing `PersistentVolume` or `PersistentVolumeClaim`
+`storageClassName` in place, so the pre-acceptance pilot root disk must be
+deleted and recreated before reconciling the `kubevirt-local-immediate` version.
+Run the cleanup after this revision has been pushed and fetched by Flux; if you
+clean up earlier, keep the `vms` Kustomization suspended until the new revision
+is ready so Flux does not recreate the old `kubevirt-local` objects.
+
+Check the current storage class first:
+
+```bash
+kubectl get pv actual-rootdisk -o jsonpath='{.spec.storageClassName}{"\n"}' 2>/dev/null || true
+kubectl -n vms get pvc actual-rootdisk -o jsonpath='{.spec.storageClassName}{"\n"}' 2>/dev/null || true
+```
+
+If either command prints `kubevirt-local`, suspend VM reconciliation, remove the
+old pilot resources, and then resume reconciliation. Do not run this after
+migrating accepted Actual data unless you have a tested backup or snapshot.
+
+```bash
+flux suspend kustomization vms -n flux-system
+virtctl stop actual -n vms || true
+kubectl -n vms delete vmi actual --ignore-not-found --wait=true
+kubectl -n vms delete vm actual --ignore-not-found --wait=true
+kubectl -n vms delete dv actual-rootdisk --ignore-not-found --wait=true
+kubectl -n vms delete pvc actual-rootdisk --ignore-not-found --wait=true
+kubectl delete pv actual-rootdisk --ignore-not-found --wait=true
+flux resume kustomization vms -n flux-system
+```
+
+If a failed or partial import left files in `/flash/enc/kubevirt/actual/rootdisk`,
+inspect and clean that directory manually before retrying the import. The
+directory itself must continue to exist.
+
 ## Reconcile homelab-apps
 
 After committing and pushing this repo:
@@ -162,6 +199,7 @@ The following steps intentionally require operator action:
 - Apply the `nix-config` host change on `blizzard`.
 - Ensure Flux Git SSH auth is present in `flux-system` if the cluster is fresh.
 - Push this `homelab-apps` branch/repo so Flux can reconcile it.
+- Delete and recreate old `actual-rootdisk` pilot resources first if a previous revision used `kubevirt-local`.
 - Start the VM with `virtctl start`; GitOps leaves it in manual-control mode.
 - Add SSH keys or a cloud-init Secret later if interactive guest login is required. No SSH private material belongs in this repo.
 - Add a Traefik route only after middleware parity and rollback are validated.
@@ -172,6 +210,7 @@ The pilot is accepted when:
 
 - the local PV directory is created by NixOS or verified manually;
 - Flux reconciles `storage`, `kubevirt-config`, `cdi-config`, and `vms`;
+- `PersistentVolume/actual-rootdisk` and `PersistentVolumeClaim/actual-rootdisk` use `kubevirt-local-immediate`;
 - `DataVolume/actual-rootdisk` imports successfully;
 - `VirtualMachine/actual` starts manually and Flux does not revert it to stopped;
 - qemu-guest-agent responds;
