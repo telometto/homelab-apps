@@ -1,0 +1,11 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: kubevirt-local-immediate
+  annotations:
+    storageclass.kubernetes.io/is-default-class: 'false'
+    homelab.telometto.io/purpose: pre-imported KubeVirt boot disks
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: false
