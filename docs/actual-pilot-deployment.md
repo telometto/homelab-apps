@@ -6,9 +6,10 @@ This runbook deploys the first KubeVirt pilot VM: `actual` in the `vms` namespac
 
 | Resource | Location | Purpose |
 |---|---|---|
+| `StorageClass/kubevirt-local-immediate` | `storage/storageclass-immediate.yaml` | Immediate-binding class for pre-imported local boot disks |
 | `PersistentVolume/actual-rootdisk` | `vms/actual/pv.yaml` | Binds the VM boot disk to `/flash/enc/kubevirt/actual/rootdisk` on `blizzard` |
 | `DataVolume/actual-rootdisk` | `vms/actual/datavolume.yaml` | Imports the Debian Stable cloud image into the root disk PVC |
-| `VirtualMachine/actual` | `vms/actual/virtualmachine.yaml` | Halted KubeVirt VM; starts only when explicitly requested |
+| `VirtualMachine/actual` | `vms/actual/virtualmachine.yaml` | Manual-control KubeVirt VM; starts only when explicitly requested |
 | `Service/actual` | `vms/actual/service.yaml` | ClusterIP service for the Actual HTTP port `11051` |
 | `NetworkPolicy/actual-*` | `vms/actual/networkpolicy.yaml` | Allows Traefik ingress and temporary bootstrap egress for DNS/HTTP/HTTPS |
 
@@ -88,12 +89,14 @@ Expected:
 
 - `PersistentVolume/actual-rootdisk` exists.
 - `PersistentVolumeClaim/actual-rootdisk` is bound.
-- `DataVolume/actual-rootdisk` completes successfully.
-- `VirtualMachine/actual` exists with `runStrategy: Halted`.
+- `DataVolume/actual-rootdisk` completes successfully using the `kubevirt-local-immediate` StorageClass.
+- `VirtualMachine/actual` exists with `runStrategy: Manual`.
 
 ## Start the pilot VM
 
-Only start the VM after the DataVolume import succeeds:
+Only start the VM after the DataVolume import succeeds. The VM manifest uses
+`runStrategy: Manual`, so Flux can continue reconciling `./vms` without
+drift-correcting the manual start back to a stopped state:
 
 ```bash
 virtctl start actual -n vms
@@ -159,7 +162,7 @@ The following steps intentionally require operator action:
 - Apply the `nix-config` host change on `blizzard`.
 - Ensure Flux Git SSH auth is present in `flux-system` if the cluster is fresh.
 - Push this `homelab-apps` branch/repo so Flux can reconcile it.
-- Start the VM with `virtctl start`; GitOps leaves it halted by default.
+- Start the VM with `virtctl start`; GitOps leaves it in manual-control mode.
 - Add SSH keys or a cloud-init Secret later if interactive guest login is required. No SSH private material belongs in this repo.
 - Add a Traefik route only after middleware parity and rollback are validated.
 
@@ -170,7 +173,7 @@ The pilot is accepted when:
 - the local PV directory is created by NixOS or verified manually;
 - Flux reconciles `storage`, `kubevirt-config`, `cdi-config`, and `vms`;
 - `DataVolume/actual-rootdisk` imports successfully;
-- `VirtualMachine/actual` starts manually;
+- `VirtualMachine/actual` starts manually and Flux does not revert it to stopped;
 - qemu-guest-agent responds;
 - `Service/actual` responds through `kubectl port-forward`;
 - stopping and starting the VM preserves service state;
