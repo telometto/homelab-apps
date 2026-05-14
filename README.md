@@ -16,6 +16,7 @@ GitOps repository for the blizzard k3s cluster. Managed by Flux.
 - `sealed-secrets/` — Sealed Secrets controller
 - `ingress/` — Traefik, cloudflared
 - `vms/` — KubeVirt VM inventory and pilot VM manifests
+- `docs/` — Deployment and operations runbooks
 
 ## Migration status
 
@@ -25,3 +26,7 @@ host-side local PV directory exists and the operator stack is healthy.
 
 Public routes are not cut over by default. Add Traefik routes only after matching
 the old NixOS Traefik security middleware and validating rollback.
+
+## Runbooks
+
+- [Actual pilot VM deployment](docs/actual-pilot-deployment.md)
