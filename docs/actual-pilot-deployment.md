@@ -205,10 +205,23 @@ the VM references `Secret/actual-cloudinit` via `cloudInitNoCloud.secretRef`
 because KubeVirt rejects inline `cloudInitNoCloud.userData` larger than 2048 bytes. That
 cloud-init payload writes `actual-bootstrap.service`, then that service replaces
 the Debian mirrorlist sources with explicit HTTP Debian sources, forces IPv4,
-applies short apt timeouts, installs the guest packages, starts
+sets the guest default-interface MTU to `1280` to match the Cilium-backed
+`virt-launcher` pod path, applies short apt timeouts, installs the guest packages, starts
 `qemu-guest-agent`, and then starts `actual-server.service`. HTTP is acceptable
 here because Debian package integrity is enforced by signed release metadata and
 package signatures.
+
+For KubeVirt masquerade networking, do not assume a NetworkPolicy DNS rule that
+selects the CoreDNS pods is enough. The Debian guest initially receives the
+kube-dns ClusterIP in its routes/resolver configuration, and Cilium can evaluate
+the guest-originated packet as `virt-launcher` pod IP -> kube-dns Service IP.
+The pilot egress policy therefore allows both the `k8s-app=kube-dns` pods and
+the current kube-dns ClusterIP `10.43.0.10/32` on TCP/UDP 53 for diagnostics and
+future cluster-DNS use. During bootstrap, however, the guest writes a static
+`/etc/resolv.conf` using pinned Cloudflare resolvers (`1.1.1.1` and `1.0.0.1`),
+and the NetworkPolicy allows only those public resolver IPs on TCP/UDP 53. If
+the Service CIDR, kube-dns IP, or chosen bootstrap resolvers change, update
+`vms/actual/networkpolicy.yaml` before recreating or bootstrapping the VM.
 
 If this was changed after the VM already booted once, recreate the pilot root
 disk after pushing the fix because cloud-init has already cached first-boot state
