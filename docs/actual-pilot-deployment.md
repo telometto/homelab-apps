@@ -206,10 +206,26 @@ because KubeVirt rejects inline `cloudInitNoCloud.userData` larger than 2048 byt
 cloud-init payload writes `actual-bootstrap.service`, then that service replaces
 the Debian mirrorlist sources with explicit HTTP Debian sources, forces IPv4,
 sets the guest default-interface MTU to `1280` to match the Cilium-backed
-`virt-launcher` pod path, applies short apt timeouts, installs the guest packages, starts
-`qemu-guest-agent`, and then starts `actual-server.service`. HTTP is acceptable
-here because Debian package integrity is enforced by signed release metadata and
-package signatures.
+`virt-launcher` pod path, applies short apt timeouts, installs the guest packages
+including `nftables` for Podman's netavark backend, starts `qemu-guest-agent`,
+and then starts `actual-server.service`. HTTP is acceptable here because Debian
+package integrity is enforced by signed release metadata and package signatures.
+
+If the probe changes from `connection refused` to a timeout after
+`actual-server.service` starts, inspect the guest firewall logs for forwarded
+traffic being dropped from the VM interface to `podman0`:
+
+```bash
+journalctl -k --no-pager | grep 'UFW BLOCK.*OUT=podman0.*DPT=5006'
+```
+
+Actual runs in a Podman bridge network. The VM receives traffic on KubeVirt port
+`11051`, then Podman DNAT forwards it to container port `5006` on `podman0`. The
+guest keeps UFW's routed default policy at `deny`, so bootstrap adds a narrow
+routed allow for the k3s pod CIDR admitted by Kubernetes NetworkPolicy:
+`10.42.0.0/16 -> 10.88.0.0/16:5006` from the default VM interface to `podman0`.
+If the k3s pod CIDR or Podman default bridge subnet changes, update
+`vms/actual/cloudinit-secret.yaml` before recreating the pilot root disk.
 
 For KubeVirt masquerade networking, do not assume a NetworkPolicy DNS rule that
 selects the CoreDNS pods is enough. The Debian guest initially receives the
