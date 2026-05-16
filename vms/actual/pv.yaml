@@ -14,7 +14,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: kubevirt-local-immediate
   local:
-    path: /flash/enc/kubevirt/actual/rootdisk
+    path: /flash/enc/vms/kubevirt/actual/rootdisk
   claimRef:
     namespace: vms
     name: actual-rootdisk
