@@ -55,8 +55,14 @@ spec:
           cloudInitNoCloud:
             userData: |
               #cloud-config
+              apt:
+                conf: |
+                  Acquire::ForceIPv4 "true";
+                  Acquire::Retries "3";
+                  Acquire::http::Timeout "20";
+                  Acquire::https::Timeout "20";
               package_update: true
-              package_upgrade: true
+              package_upgrade: false
               ssh_pwauth: false
               disable_root: true
               users:
@@ -68,6 +74,7 @@ spec:
                   shell: /bin/bash
                   sudo: ALL=(ALL) NOPASSWD:ALL
               packages:
+                - ca-certificates
                 - podman
                 - qemu-guest-agent
                 - ufw
@@ -84,6 +91,7 @@ spec:
                     [Service]
                     Restart=always
                     RestartSec=5s
+                    TimeoutStartSec=5min
                     ExecStartPre=-/usr/bin/podman pull docker.io/actualbudget/actual-server:latest
                     ExecStart=/usr/bin/podman run --rm --name actual-server --publish 0.0.0.0:11051:5006 --volume /srv/actual:/data:Z docker.io/actualbudget/actual-server:latest
                     ExecStop=-/usr/bin/podman stop -t 30 actual-server
