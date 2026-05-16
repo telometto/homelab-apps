@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - pv.yaml
   - datavolume.yaml
+  - cloudinit-secret.yaml
   - virtualmachine.yaml
   - service.yaml
   - networkpolicy.yaml
