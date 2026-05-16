@@ -65,8 +65,6 @@ spec:
               package_upgrade: false
               ssh_pwauth: false
               disable_root: true
-              bootcmd:
-                - [sh, -c, "systemctl enable --now qemu-guest-agent || true"]
               users:
                 - default
                 - name: admin
