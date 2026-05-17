@@ -9,7 +9,7 @@ metadata:
   annotations:
     homelab.telometto.io/migration-source: nix-config/vms/actual.nix
     homelab.telometto.io/original-microvm-ip: 10.100.0.51
-    homelab.telometto.io/original-service-port: '11051'
+    homelab.telometto.io/original-service-port: "11051"
 spec:
   runStrategy: Manual
   template:

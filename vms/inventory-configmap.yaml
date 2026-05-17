@@ -11,28 +11,28 @@ data:
     # Temporary inventory copied from nix-config/vms/vm-registry.nix.
     # Keep this file informational; per-VM manifests are the executable source of truth.
     vms:
-      adguard: { port: 11010, memory: 3Gi, cpu: 1, publicHosts: [adguard], enabledInMicrovm: false }
       actual: { port: 11051, memory: 1Gi, cpu: 1, publicHosts: [actual], enabledInMicrovm: false }
-      searx: { port: 11012, memory: 2Gi, cpu: 1, publicHosts: [search], enabledInMicrovm: true }
-      ombi: { port: 11041, memory: 1Gi, cpu: 1, publicHosts: [ombi], enabledInMicrovm: true }
-      tautulli: { port: 11042, memory: 1Gi, cpu: 1, publicHosts: [tautulli], enabledInMicrovm: true }
-      gitea: { port: 11050, memory: 2Gi, cpu: 2, publicHosts: [git, ssh-git], enabledInMicrovm: true }
-      sonarr: { port: 11021, memory: 1Gi, cpu: 1, publicHosts: [series], enabledInMicrovm: true }
-      radarr: { port: 11022, memory: 1Gi, cpu: 1, publicHosts: [movies], enabledInMicrovm: true }
-      prowlarr: { port: 11020, memory: 1Gi, cpu: 1, publicHosts: [indexer], enabledInMicrovm: true }
+      adguard: { port: 11010, memory: 3Gi, cpu: 1, publicHosts: [adguard], enabledInMicrovm: false }
       bazarr: { port: 11023, memory: 1Gi, cpu: 1, publicHosts: [subs], enabledInMicrovm: true }
-      readarr: { port: 11024, memory: 1Gi, cpu: 1, publicHosts: [books], enabledInMicrovm: true }
-      lidarr: { port: 11028, memory: 1Gi, cpu: 1, publicHosts: [music], enabledInMicrovm: false }
-      qbittorrent: { port: 11030, memory: 2Gi, cpu: 1, publicHosts: [], enabledInMicrovm: true, vpnRouted: true }
-      overseerr: { port: 11040, memory: 1Gi, cpu: 1, publicHosts: [requests], enabledInMicrovm: true }
-      firefox: { port: 11052, memory: 4Gi, cpu: 4, publicHosts: [ff], enabledInMicrovm: true, vpnRouted: true }
-      wireguard: { port: 56943, memory: 512Mi, cpu: 1, publicHosts: [], enabledInMicrovm: true, rawUdp: true }
-      sabnzbd: { port: 11031, memory: 1Gi, cpu: 1, publicHosts: [sab], enabledInMicrovm: true, vpnRouted: true }
-      flaresolverr: { port: 11013, memory: 512Mi, cpu: 1, publicHosts: [], enabledInMicrovm: false, embeddedIn: prowlarr }
-      matrix-synapse: { port: 11060, memory: 4Gi, cpu: 4, publicHosts: [matrix, apex], enabledInMicrovm: true }
-      paperless: { port: 11061, memory: 8Gi, cpu: 4, publicHosts: [docs], enabledInMicrovm: false }
-      firefly: { port: 11062, memory: 2Gi, cpu: 2, publicHosts: [finance], enabledInMicrovm: true }
       brave: { port: 11054, memory: 4Gi, cpu: 4, publicHosts: [brave], enabledInMicrovm: false, vpnRouted: true }
+      flaresolverr: { port: 11013, memory: 512Mi, cpu: 1, publicHosts: [], enabledInMicrovm: false, embeddedIn: prowlarr }
+      firefly: { port: 11062, memory: 2Gi, cpu: 2, publicHosts: [finance], enabledInMicrovm: true }
       firefly-importer: { port: 11063, memory: 512Mi, cpu: 1, publicHosts: [finimport], enabledInMicrovm: true }
+      firefox: { port: 11052, memory: 4Gi, cpu: 4, publicHosts: [ff], enabledInMicrovm: true, vpnRouted: true }
+      gitea: { port: 11050, memory: 2Gi, cpu: 2, publicHosts: [git, ssh-git], enabledInMicrovm: true }
       immich: { port: 11070, memory: 8Gi, cpu: 4, publicHosts: [photos], enabledInMicrovm: false }
+      lidarr: { port: 11028, memory: 1Gi, cpu: 1, publicHosts: [music], enabledInMicrovm: false }
+      matrix-synapse: { port: 11060, memory: 4Gi, cpu: 4, publicHosts: [matrix, apex], enabledInMicrovm: true }
       mealie: { port: 11071, memory: 1Gi, cpu: 1, publicHosts: [recipes], enabledInMicrovm: true }
+      ombi: { port: 11041, memory: 1Gi, cpu: 1, publicHosts: [ombi], enabledInMicrovm: true }
+      overseerr: { port: 11040, memory: 1Gi, cpu: 1, publicHosts: [requests], enabledInMicrovm: true }
+      paperless: { port: 11061, memory: 8Gi, cpu: 4, publicHosts: [docs], enabledInMicrovm: false }
+      prowlarr: { port: 11020, memory: 1Gi, cpu: 1, publicHosts: [indexer], enabledInMicrovm: true }
+      qbittorrent: { port: 11030, memory: 2Gi, cpu: 1, publicHosts: [], enabledInMicrovm: true, vpnRouted: true }
+      radarr: { port: 11022, memory: 1Gi, cpu: 1, publicHosts: [movies], enabledInMicrovm: true }
+      readarr: { port: 11024, memory: 1Gi, cpu: 1, publicHosts: [books], enabledInMicrovm: true }
+      sabnzbd: { port: 11031, memory: 1Gi, cpu: 1, publicHosts: [sab], enabledInMicrovm: true, vpnRouted: true }
+      searx: { port: 11012, memory: 2Gi, cpu: 1, publicHosts: [search], enabledInMicrovm: true }
+      sonarr: { port: 11021, memory: 1Gi, cpu: 1, publicHosts: [series], enabledInMicrovm: true }
+      tautulli: { port: 11042, memory: 1Gi, cpu: 1, publicHosts: [tautulli], enabledInMicrovm: true }
+      wireguard: { port: 56943, memory: 512Mi, cpu: 1, publicHosts: [], enabledInMicrovm: true, rawUdp: true }

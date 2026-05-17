@@ -3,7 +3,7 @@ kind: StorageClass
 metadata:
   name: kubevirt-local
   annotations:
-    storageclass.kubernetes.io/is-default-class: 'false'
+    storageclass.kubernetes.io/is-default-class: "false"
 provisioner: kubernetes.io/no-provisioner
 reclaimPolicy: Retain
 volumeBindingMode: WaitForFirstConsumer
