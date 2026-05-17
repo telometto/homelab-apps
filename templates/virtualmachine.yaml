@@ -9,8 +9,8 @@ metadata:
     app.kubernetes.io/part-of: kubevirt-migration
   annotations:
     homelab.telometto.io/migration-source: nix-config/vms/${VMNAME}.nix
-    homelab.telometto.io/original-microvm-ip: 10.100.0.51
-    homelab.telometto.io/original-service-port: "11051"
+    homelab.telometto.io/original-microvm-ip: 10.100.0.51  # TODO: update per VM
+    homelab.telometto.io/original-service-port: "11051"    # TODO: update per VM
 spec:
   runStrategy: Manual
   template:
@@ -43,7 +43,7 @@ spec:
               masquerade: {}
               ports:
                 - name: http
-                  port: 11051
+                  port: 11051  # TODO: update per VM
                   protocol: TCP
       networks:
         - name: default

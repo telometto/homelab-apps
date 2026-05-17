@@ -13,6 +13,6 @@ spec:
     vm.kubevirt.io/name: ${VMNAME}
   ports:
     - name: http
-      port: 11051
+      port: 11051        # TODO: update per VM
       protocol: TCP
-      targetPort: 11051
+      targetPort: 11051  # TODO: update per VM

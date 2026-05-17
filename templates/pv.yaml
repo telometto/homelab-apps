@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/part-of: kubevirt-migration
 spec:
   capacity:
-    storage: 20Gi
+    storage: 20Gi  # TODO: update per VM
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
@@ -26,4 +26,4 @@ spec:
             - key: kubernetes.io/hostname
               operator: In
               values:
-                - blizzard
+                - blizzard  # TODO: update per VM
