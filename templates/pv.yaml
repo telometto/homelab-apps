@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ${VMNAME}-rootdisk
+  labels:
+    app.kubernetes.io/name: ${VMNAME}
+    app.kubernetes.io/part-of: kubevirt-migration
+spec:
+  capacity:
+    storage: 20Gi  # TODO: update per VM
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: kubevirt-local-immediate
+  local:
+    path: /flash/enc/vms/kubevirt/${VMNAME}/rootdisk
+  claimRef:
+    namespace: vms
+    name: ${VMNAME}-rootdisk
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - blizzard  # TODO: update per VM

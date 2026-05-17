@@ -1,0 +1,58 @@
+---
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: ${VMNAME}
+  namespace: vms
+  labels:
+    app.kubernetes.io/name: ${VMNAME}
+    app.kubernetes.io/part-of: kubevirt-migration
+  annotations:
+    homelab.telometto.io/migration-source: nix-config/vms/${VMNAME}.nix
+    homelab.telometto.io/original-microvm-ip: 10.100.0.51  # TODO: update per VM
+    homelab.telometto.io/original-service-port: "11051"    # TODO: update per VM
+spec:
+  runStrategy: Manual
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ${VMNAME}
+        app.kubernetes.io/part-of: kubevirt-migration
+        vm.kubevirt.io/name: ${VMNAME}
+        kubevirt.io/domain: ${VMNAME}
+    spec:
+      terminationGracePeriodSeconds: 180
+      domain:
+        machine:
+          type: q35
+        cpu:
+          cores: 1
+        resources:
+          requests:
+            memory: 1Gi
+        devices:
+          disks:
+            - name: rootdisk
+              disk:
+                bus: virtio
+            - name: cloudinitdisk
+              disk:
+                bus: virtio
+          interfaces:
+            - name: default
+              masquerade: {}
+              ports:
+                - name: http
+                  port: 11051  # TODO: update per VM
+                  protocol: TCP
+      networks:
+        - name: default
+          pod: {}
+      volumes:
+        - name: rootdisk
+          dataVolume:
+            name: ${VMNAME}-rootdisk
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            secretRef:
+              name: ${VMNAME}-cloudinit

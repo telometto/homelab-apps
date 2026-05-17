@@ -1,0 +1,83 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ${VMNAME}-ingress
+  namespace: vms
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ${VMNAME}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress
+      ports:
+        - protocol: TCP
+          port: 11051  # TODO: update per VM
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ${VMNAME}-and-importer-bootstrap-egress
+  namespace: vms
+  annotations:
+    homelab.telometto.io/scope: >
+      Temporary pilot policy for the ${VMNAME} VM and CDI importer pods. Tighten
+      per VM before adding VPN-routed or high-risk services to this namespace.
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # KubeVirt masquerade guests receive the kube-dns Service IP directly in
+    # their guest routes. Cilium evaluates this traffic against the ClusterIP,
+    # so allow DNS to the service IP in addition to the backing CoreDNS pods.
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.10/32
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Bootstrap uses pinned public resolvers because kube-dns ClusterIP replies
+    # can fail to return through the KubeVirt masquerade NAT path even when
+    # Cilium allows the Service IP. Keep this narrow: DNS only, resolver IPs only.
+    - to:
+        - ipBlock:
+            cidr: 1.1.1.1/32
+        - ipBlock:
+            cidr: 1.0.0.1/32
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
