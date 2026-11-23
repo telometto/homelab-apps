@@ -1,0 +1,8 @@
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: CDI
+metadata:
+  name: cdi
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  uninstallStrategy: BlockUninstallIfWorkloadsExist

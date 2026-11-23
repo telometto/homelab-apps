@@ -1,0 +1,37 @@
+apiVersion: kubevirt.io/v1
+kind: KubeVirt
+metadata:
+  name: kubevirt
+  namespace: kubevirt
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  uninstallStrategy: BlockUninstallIfWorkloadsExist
+  imageTag: v1.9.1
+  imageRegistry: quay.io/kubevirt
+  configuration:
+    developerConfiguration:
+      useEmulation: false
+      nodeSelectors:
+        kubernetes.io/hostname: blizzard
+    commonInstancetypesDeployment:
+      enabled: false
+  customizeComponents:
+    patches:
+    - resourceType: DaemonSet
+      resourceName: virt-handler
+      type: strategic
+      patch: '{"spec": {"template": {"spec": {"volumes": [{"name": "kubelet", "hostPath":
+        {"path": "/var/lib/kubelet-actual-pilot"}}, {"name": "kubelet-pods", "hostPath":
+        {"path": "/var/lib/kubelet-actual-pilot/pods"}}, {"name": "pilot-kubelet-root",
+        "hostPath": {"path": "/var/lib/kubelet-actual-pilot"}}, {"name": "canonical-device-plugins",
+        "hostPath": {"path": "/var/lib/kubelet/device-plugins"}}], "containers": [{"name":
+        "virt-handler", "volumeMounts": [{"name": "pilot-kubelet-root", "mountPath":
+        "/var/lib/kubelet-actual-pilot", "mountPropagation": "HostToContainer"}, {"name":
+        "canonical-device-plugins", "mountPath": "/var/lib/kubelet/device-plugins"}]}]}}}}'
+    - resourceType: DaemonSet
+      resourceName: virt-handler
+      type: json
+      patch: '[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value":
+        "--kubelet-root=/var/lib/kubelet-actual-pilot"}, {"op": "add", "path": "/spec/template/spec/containers/0/args/-",
+        "value": "--kubelet-pods-dir=/var/lib/kubelet-actual-pilot/pods"}]'
