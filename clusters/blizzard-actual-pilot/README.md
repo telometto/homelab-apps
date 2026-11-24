@@ -6,9 +6,9 @@ Cloudflare resources. Source authentication uses public GitHub HTTPS.
 
 The corresponding host configuration and operations runbook are in
 [`nix-config/docs/actual-kubevirt-pilot.md`](https://github.com/telometto/nix-config/blob/main/docs/actual-kubevirt-pilot.md).
-Until those changes are published, read that file in the companion local
-checkout. This implementation is prepared and unactivated; it has no claim
-of live VM, restore, or host-reboot acceptance.
+The private pilot passed Git stop/start, stopped-disk backup and a separate
+restore boot/restart with a budget comparison on 2026-11-24. Host-reboot safety
+and off-host backup require their own acceptance checks.
 
 ## Reconciliation order
 
@@ -35,14 +35,36 @@ import uses node pulling, which does not require a dynamic scratch PVC.
 - Commit `runStrategy: Halted` for a durable stop.
 - Use the matching host `actual-pilot-virtctl` wrapper for restart,
   guest-agent information, and console diagnostics.
-- Keep the private loopback port-forward and SSH tunnel from the host runbook
-  running while using the browser UI.
+- Keep the private loopback port-forward and SSH tunnel below running while
+  using the browser UI.
 
 The Flux health expression accepts a deliberate halt once the VM reports
 `Stopped`; it continues waiting during `Stopping`.
 
 The Actual Podman container uses host networking **inside the guest VM**.
 There is no host-networked application Pod and no public Service.
+
+For private browser access, run this on Blizzard:
+
+```bash
+sudo actual-pilot-virtctl -n actual-pilot port-forward \
+  --address=127.0.0.1 vmi/actual-pilot 15006:5006
+```
+
+On the client computer, run:
+
+```bash
+ssh -N -o ExitOnForwardFailure=yes \
+  -L 127.0.0.1:15006:127.0.0.1:15006 blizzard
+```
+
+Open `http://127.0.0.1:15006`. Use the VMI name in regular forwarding commands;
+the launcher Pod address changes when the VM restarts.
+
+`virtctl port-forward` connects to the VM through `virt-api`. The HTTP ingress
+policy admits probe traffic and TCP 5006 from pods labelled
+`kubevirt.io: virt-api` within the `kubevirt` namespace. Both selectors belong
+to the same peer, so other pods in that namespace receive no HTTP allowance.
 
 `actual/guest/user-data.yaml` is public provisioning, wrapped in a generated
 Kubernetes Secret because KubeVirt accepts cloud-init through `secretRef`.
@@ -66,6 +88,8 @@ Backup requires a stopped VM and independently stored copies of both disk
 images. Restore into separate new PV/PVCs and a separately named VM. Do not
 re-import over restored images. See the host runbook for the acceptance
 sequence and preservation gates.
+Give the restored VM its own Service and policy selectors; include the
+`virt-api` ingress peer when checking browser access through `virtctl`.
 If the cluster database is lost while images remain, the host startup guard
 refuses automatic re-import. Preserve both images and recover their PVC
 bindings deliberately; guest checks cannot protect an image from CDI.

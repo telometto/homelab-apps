@@ -138,6 +138,49 @@ class ManifestTests(unittest.TestCase):
                 )
             )
 
+    def test_private_http_allows_probes_and_only_kubevirt_api_forwarders(self):
+        ingress = [
+            d
+            for d in self.resources
+            if d["kind"] == "NetworkPolicy"
+            and d["metadata"].get("namespace") == "actual-pilot"
+            and "Ingress" in d["spec"].get("policyTypes", [])
+        ]
+        self.assertCountEqual(
+            [d["metadata"]["name"] for d in ingress],
+            ["default-deny", "actual-pilot-ingress"],
+        )
+        policy = next(
+            d for d in ingress if d["metadata"]["name"] == "actual-pilot-ingress"
+        )["spec"]
+        self.assertEqual(
+            policy["podSelector"],
+            {"matchLabels": {"app.kubernetes.io/name": "actual-pilot"}},
+        )
+        self.assertEqual(len(policy["ingress"]), 1)
+        rule = policy["ingress"][0]
+        self.assertEqual(rule["ports"], [{"port": 5006, "protocol": "TCP"}])
+        # Namespace and pod selectors must share one peer: splitting them
+        # into separate entries would allow every pod in the namespace.
+        self.assertCountEqual(
+            rule["from"],
+            [
+                {
+                    "namespaceSelector": {
+                        "matchLabels": {
+                            "kubernetes.io/metadata.name": "actual-pilot-probes"
+                        }
+                    }
+                },
+                {
+                    "namespaceSelector": {
+                        "matchLabels": {"kubernetes.io/metadata.name": "kubevirt"}
+                    },
+                    "podSelector": {"matchLabels": {"kubevirt.io": "virt-api"}},
+                },
+            ],
+        )
+
     def test_cloud_init_is_nonsecret_provisioning_with_a_pinned_app(self):
         secrets = [d for d in self.resources if d["kind"] == "Secret"]
         self.assertEqual(len(secrets), 1)

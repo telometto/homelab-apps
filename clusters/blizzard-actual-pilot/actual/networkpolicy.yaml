@@ -25,6 +25,13 @@ spec:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: actual-pilot-probes
+    # The authenticated virtctl forwarder connects from virt-api.
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kubevirt
+      podSelector:
+        matchLabels:
+          kubevirt.io: virt-api
     ports:
     - port: 5006
       protocol: TCP
