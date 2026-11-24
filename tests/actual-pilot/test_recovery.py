@@ -271,7 +271,7 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertNotIn("ordering cycle", result.stderr.lower())
 
-    def test_cached_actual_image_can_start_when_registry_is_unavailable(self):
+    def test_image_preparation_handles_cache_and_registry_with_debian_podman(self):
         unit = payload_files()["/etc/systemd/system/actual-pilot.service"]
         command = shlex.split(
             next(
@@ -280,26 +280,67 @@ class RecoveryTests(unittest.TestCase):
                 if line.startswith("ExecStartPre=")
             )
         )
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory)
-            cached = path / "cached-image"
-            cached.write_text("existing pinned image")
-            podman = path / "podman"
-            podman.write_text(
-                '#!/bin/sh\n[ -f "$PILOT_CACHED_IMAGE" ] && [ "$1" = pull ] && [ "$2" = --policy=missing ] && exit 0\necho \'registry unavailable\' >&2\nexit 1\n'
-            )
-            podman.chmod(0o755)
-            command[0] = shutil.which("timeout")
-            command[2] = str(podman)
-            result = subprocess.run(
-                command,
-                env={**os.environ, "PILOT_CACHED_IMAGE": str(cached)},
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(cached.read_text(), "existing pinned image")
+        for image_cached, registry_available, succeeds in (
+            (True, False, True),
+            (False, True, True),
+            (False, False, False),
+        ):
+            with (
+                self.subTest(cached=image_cached, registry=registry_available),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                path = Path(directory)
+                cached = path / "cached-image"
+                if image_cached:
+                    cached.write_text("existing pinned image")
+                podman = path / "podman"
+                # Model storage and registry access at the CLI boundary.
+                # Debian 13's Podman 5.4.2 has `image exists` and `pull IMAGE`,
+                # but cannot accept the newer `pull --policy=missing`.
+                podman.write_text(
+                    """#!/bin/sh
+case "$1" in
+  image)
+    [ "$#" -eq 3 ] && [ "$2" = exists ] || exit 125
+    test -f "$PILOT_CACHED_IMAGE"
+    ;;
+  pull)
+    if [ "$#" -ne 2 ]; then
+      echo 'unsupported pull option (Debian Podman 5.4.2)' >&2
+      exit 125
+    fi
+    if [ "$PILOT_REGISTRY_AVAILABLE" != 1 ]; then
+      echo 'registry unavailable' >&2
+      exit 1
+    fi
+    printf '%s' 'downloaded pinned image' > "$PILOT_CACHED_IMAGE"
+    ;;
+  *) exit 125 ;;
+esac
+"""
+                )
+                podman.chmod(0o755)
+                invocation = [
+                    part.replace("/usr/bin/podman", str(podman)) for part in command
+                ]
+                invocation[0] = shutil.which("timeout")
+                if invocation[2] == "/bin/sh":
+                    invocation[2] = shutil.which("sh")
+                result = subprocess.run(
+                    invocation,
+                    env={
+                        **os.environ,
+                        "PILOT_CACHED_IMAGE": str(cached),
+                        "PILOT_REGISTRY_AVAILABLE": str(int(registry_available)),
+                    },
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+                self.assertEqual(result.returncode == 0, succeeds, result.stderr)
+                self.assertEqual(cached.exists(), succeeds)
+                if image_cached:
+                    self.assertEqual(cached.read_text(), "existing pinned image")
 
 
 if __name__ == "__main__":
