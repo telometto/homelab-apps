@@ -1,0 +1,25 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: actual-pilot
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/telometto/homelab-apps.git
+  ref:
+    branch: main
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: actual-pilot
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  timeout: 5m
+  wait: false

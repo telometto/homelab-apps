@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: actual-pilot-data
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: actual-pilot-local
+  local:
+    path: /flash/enc/vms/kubevirt-pilot/actual/data
+  claimRef:
+    namespace: actual-pilot
+    name: actual-pilot-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - blizzard
+---
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: actual-pilot-data
+  namespace: actual-pilot
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  source:
+    blank: {}
+  pvc:
+    storageClassName: actual-pilot-local
+    volumeName: actual-pilot-data
+    volumeMode: Filesystem
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10Gi

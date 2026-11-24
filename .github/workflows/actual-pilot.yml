@@ -1,0 +1,25 @@
+name: Actual pilot
+on:
+  pull_request:
+    paths:
+      - clusters/blizzard-actual-pilot/**
+      - tests/actual-pilot/**
+      - .github/workflows/actual-pilot.yml
+  push:
+    branches: [main]
+    paths:
+      - clusters/blizzard-actual-pilot/**
+      - tests/actual-pilot/**
+      - .github/workflows/actual-pilot.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: cachix/install-nix-action@v32.1.0
+      - name: Build and validate the isolated pilot
+        run: nix-build tests/actual-pilot --no-out-link

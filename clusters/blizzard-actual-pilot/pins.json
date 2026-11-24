@@ -1,0 +1,35 @@
+{
+  "k3s": "1.35.10+k3s1",
+  "actual": {
+    "version": "26.11.0",
+    "image": "ghcr.io/actualbudget/actual@sha256:06cf186569cf58d93e12659ff1a517b65b5b0ebee7050a3991d4bd8a1d398da6"
+  },
+  "debian": {
+    "version": "13",
+    "sourceTag": "13-2611170210",
+    "image": "docker://quay.io/containerdisks/debian@sha256:90b09aed0bbca79adf4ebb2445b548332dee59a600de20038639747526a44ba7"
+  },
+  "assets": [
+    {
+      "component": "Flux",
+      "version": "2.10.1",
+      "path": "flux-system/components.yaml",
+      "url": "https://github.com/fluxcd/flux2/releases/download/v2.10.1/install.yaml",
+      "sha256": "4db2fb9ce179622327d3a9a36a765bbfc0329fd50690e8d37da7dd0918b09392"
+    },
+    {
+      "component": "KubeVirt",
+      "version": "1.9.1",
+      "path": "kubevirt/operator/operator.yaml",
+      "url": "https://github.com/kubevirt/kubevirt/releases/download/v1.9.1/kubevirt-operator.yaml",
+      "sha256": "9ac45a436c49d32e6fc21d542bcb7600b970705297b9e6752f3ef9b0a1d292da"
+    },
+    {
+      "component": "CDI",
+      "version": "1.66.1",
+      "path": "cdi/operator/operator.yaml",
+      "url": "https://github.com/kubevirt/containerized-data-importer/releases/download/v1.66.1/cdi-operator.yaml",
+      "sha256": "c7d92bd1b2ee1a3952a5990000437c08d58109f31c0bd48ab6188ec27a13e224"
+    }
+  ]
+}

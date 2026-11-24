@@ -1,0 +1,215 @@
+#cloud-config
+disable_root: true
+ssh_pwauth: false
+users:
+- default
+write_files:
+- path: /usr/local/lib/actual-pilot/prepare_data_disk.py
+  permissions: '0644'
+  content: |
+    """Prepare only the identified new pilot disk, or reuse its labelled filesystem."""
+
+    import stat
+    import subprocess
+    from pathlib import Path
+
+    DEVICE = Path("/dev/disk/by-id/virtio-actual-pilot-data")
+    DISK_SERIAL = "actual-pilot-data"
+    LABEL = "actual-pilot"
+
+
+    def filesystem_action(info):
+        if (
+            info.get("TYPE") == "ext4"
+            and info.get("LABEL") == LABEL
+            and not info.get("PTTYPE")
+        ):
+            return "mount"
+        if info:
+            raise ValueError("unexpected disk signature; refusing to format existing data")
+        return "format"
+
+
+    def verify_blank(path, expected_size):
+        read = 0
+        with Path(path).open("rb", buffering=0) as disk:
+            while read < expected_size:
+                block = disk.read(min(8 * 1024 * 1024, expected_size - read))
+                if not block:
+                    raise ValueError("disk shorter than expected")
+                if any(block):
+                    raise ValueError("nonzero existing data; refusing to format")
+                read += len(block)
+            if disk.read(1):
+                raise ValueError("disk larger than expected")
+
+
+    def main():
+        if not stat.S_ISBLK(DEVICE.stat().st_mode):
+            raise ValueError("pilot data path is not a block device")
+        serial = subprocess.check_output(
+            ["lsblk", "-dn", "-o", "SERIAL", str(DEVICE)], text=True
+        ).strip()
+        if serial != DISK_SERIAL:
+            raise ValueError("unexpected disk serial")
+        size = int(
+            subprocess.check_output(["blockdev", "--getsize64", str(DEVICE)], text=True)
+        )
+        # CDI reserves filesystem overhead from the 10 GiB filesystem-mode PVC.
+        if not 9 * 1024**3 <= size <= 10 * 1024**3:
+            raise ValueError("unexpected pilot data disk size")
+        probe = subprocess.run(
+            ["blkid", "-p", "-o", "export", str(DEVICE)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if probe.returncode not in (0, 2):
+            raise ValueError("cannot identify filesystem safely")
+        info = dict(line.split("=", 1) for line in probe.stdout.splitlines() if "=" in line)
+        # DEVNAME describes the queried device, not a filesystem signature.
+        info.pop("DEVNAME", None)
+        if filesystem_action(info) == "format":
+            verify_blank(DEVICE, size)
+            subprocess.run(["mkfs.ext4", "-m", "0", "-L", LABEL, str(DEVICE)], check=True)
+        print("pilot data filesystem ready", flush=True)
+
+
+    if __name__ == "__main__":
+        main()
+- path: /usr/local/lib/actual-pilot/bootstrap.sh
+  permissions: '0644'
+  content: |
+    #!/bin/bash
+    set -euo pipefail
+
+    if [ -e /var/lib/actual-pilot/bootstrap.done ]; then
+      exit 0
+    fi
+
+    export DEBIAN_FRONTEND=noninteractive
+    timeout 300 apt-get -o Acquire::Retries=2 -o Acquire::https::Timeout=20 update
+    timeout 480 apt-get -o Acquire::Retries=2 -o Acquire::https::Timeout=20 install -y \
+      qemu-guest-agent podman curl e2fsprogs ufw apparmor unattended-upgrades
+
+    ufw default deny incoming
+    ufw default deny routed
+    ufw default allow outgoing
+    ufw allow 5006/tcp
+    ufw --force enable
+    systemctl enable --now qemu-guest-agent
+    systemctl enable --now apparmor
+    systemctl enable --now unattended-upgrades
+    systemctl daemon-reload
+    systemctl enable --now actual-pilot.service
+
+    for attempt in $(seq 1 60); do
+      if curl --fail --silent --max-time 5 http://127.0.0.1:5006/ > /dev/null; then
+        install -d -m 0700 /var/lib/actual-pilot
+        touch /var/lib/actual-pilot/bootstrap.done
+        echo 'Actual pilot bootstrap complete'
+        exit 0
+      fi
+      echo "Waiting for Actual ($attempt/60)"
+      sleep 2
+    done
+    echo 'Actual pilot did not become ready; inspect actual-pilot.service' >&2
+    exit 1
+- path: /etc/systemd/system/actual-pilot.service
+  permissions: '0644'
+  content: |
+    [Unit]
+    Description=Actual Budget private pilot
+    Requires=srv-actual.mount
+    After=srv-actual.mount network-online.target
+    StartLimitIntervalSec=600
+    StartLimitBurst=3
+
+    [Service]
+    Type=simple
+    ExecStartPre=/usr/bin/timeout 300 /usr/bin/podman pull --policy=missing ghcr.io/actualbudget/actual@sha256:06cf186569cf58d93e12659ff1a517b65b5b0ebee7050a3991d4bd8a1d398da6
+    ExecStart=/usr/bin/podman run --rm --name actual-pilot --network=host --cap-drop=all --security-opt=no-new-privileges --volume=/srv/actual:/data ghcr.io/actualbudget/actual@sha256:06cf186569cf58d93e12659ff1a517b65b5b0ebee7050a3991d4bd8a1d398da6
+    ExecStop=/usr/bin/podman stop --time 30 actual-pilot
+    Restart=on-failure
+    RestartSec=10
+    TimeoutStartSec=360
+    TimeoutStopSec=45
+
+    [Install]
+    WantedBy=multi-user.target
+- path: /etc/systemd/system/actual-pilot-prepare-data.service
+  permissions: '0644'
+  content: |
+    [Unit]
+    Description=Validate or initialize only the new Actual pilot data disk
+    Requires=dev-disk-by\x2did-virtio\x2dactual\x2dpilot\x2ddata.device
+    After=dev-disk-by\x2did-virtio\x2dactual\x2dpilot\x2ddata.device
+    Before=srv-actual.mount
+
+    [Service]
+    Type=oneshot
+    ExecStart=/usr/bin/python3 /usr/local/lib/actual-pilot/prepare_data_disk.py
+    RemainAfterExit=yes
+    TimeoutStartSec=300
+- path: /etc/systemd/system/srv-actual.mount
+  permissions: '0644'
+  content: |
+    [Unit]
+    Description=Actual pilot persistent data
+    Requires=actual-pilot-prepare-data.service
+    After=actual-pilot-prepare-data.service
+    Before=actual-pilot.service
+
+    [Mount]
+    What=/dev/disk/by-id/virtio-actual-pilot-data
+    Where=/srv/actual
+    Type=ext4
+    Options=nofail,nodev,nosuid,noexec
+    TimeoutSec=60
+- path: /etc/systemd/system/actual-pilot-bootstrap.service
+  permissions: '0644'
+  content: |
+    [Unit]
+    Description=Provision the Actual pilot guest
+    After=network-online.target cloud-final.service
+    Wants=network-online.target
+    ConditionPathExists=!/var/lib/actual-pilot/bootstrap.done
+    StartLimitIntervalSec=3600
+    StartLimitBurst=3
+
+    [Service]
+    Type=oneshot
+    ExecStart=/bin/bash /usr/local/lib/actual-pilot/bootstrap.sh
+    StandardOutput=journal+console
+    StandardError=journal+console
+    TimeoutStartSec=1200
+    Restart=on-failure
+    RestartSec=30
+    RemainAfterExit=yes
+
+    [Install]
+    WantedBy=multi-user.target
+- path: /etc/apt/sources.list.d/debian.sources
+  permissions: '0644'
+  content: |
+    Types: deb
+    URIs: https://deb.debian.org/debian
+    Suites: trixie trixie-updates
+    Components: main
+    Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+    Types: deb
+    URIs: https://security.debian.org/debian-security
+    Suites: trixie-security
+    Components: main
+    Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+runcmd:
+- - systemctl
+  - daemon-reload
+- - systemctl
+  - enable
+  - actual-pilot-bootstrap.service
+- - systemctl
+  - start
+  - --no-block
+  - actual-pilot-bootstrap.service
