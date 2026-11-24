@@ -4,6 +4,21 @@ ssh_pwauth: false
 users:
 - default
 write_files:
+- path: /etc/systemd/network/05-actual-pilot.network
+  permissions: '0644'
+  content: |
+    # A retained root can outlive the launcher MAC cached by cloud-init.
+    # Match the stable PCI interface before netplan's MAC-bound fallback.
+    [Match]
+    Name=enp1s0
+
+    [Network]
+    DHCP=yes
+    LinkLocalAddressing=ipv6
+
+    [DHCPv4]
+    RouteMetric=100
+    UseMTU=true
 - path: /usr/local/lib/actual-pilot/prepare_data_disk.py
   permissions: '0644'
   content: |
