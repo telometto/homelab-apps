@@ -127,7 +127,8 @@ write_files:
 
     [Service]
     Type=simple
-    ExecStartPre=/usr/bin/timeout 300 /usr/bin/podman pull --policy=missing ghcr.io/actualbudget/actual@sha256:06cf186569cf58d93e12659ff1a517b65b5b0ebee7050a3991d4bd8a1d398da6
+    # Debian 13's Podman 5.4 has no pull --policy flag; keep cached starts offline.
+    ExecStartPre=/usr/bin/timeout 300 /bin/sh -ec '/usr/bin/podman image exists ghcr.io/actualbudget/actual@sha256:06cf186569cf58d93e12659ff1a517b65b5b0ebee7050a3991d4bd8a1d398da6 || exec /usr/bin/podman pull ghcr.io/actualbudget/actual@sha256:06cf186569cf58d93e12659ff1a517b65b5b0ebee7050a3991d4bd8a1d398da6'
     ExecStart=/usr/bin/podman run --rm --name actual-pilot --network=host --cap-drop=all --security-opt=no-new-privileges --volume=/srv/actual:/data ghcr.io/actualbudget/actual@sha256:06cf186569cf58d93e12659ff1a517b65b5b0ebee7050a3991d4bd8a1d398da6
     ExecStop=/usr/bin/podman stop --time 30 actual-pilot
     Restart=on-failure
