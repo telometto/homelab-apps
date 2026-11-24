@@ -1,5 +1,6 @@
 """Exercise restart, lifecycle, and exact upstream integration boundaries."""
 
+import configparser
 import json
 import os
 import shlex
@@ -24,6 +25,20 @@ def payload_files():
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_guest_network_profile_survives_launcher_mac_changes(self):
+        files = payload_files()
+        path = "/etc/systemd/network/05-actual-pilot.network"
+        self.assertIn(path, files)
+        profile = configparser.ConfigParser()
+        profile.optionxform = str
+        profile.read_string(files[path])
+        # A retained root must configure the same PCI interface when a new
+        # launcher supplies a different MAC. Do not inherit a MAC-bound match
+        # from cloud-init's first-boot fallback network declaration.
+        self.assertEqual(dict(profile["Match"]), {"Name": "enp1s0"})
+        self.assertTrue(profile.getboolean("Network", "DHCP"))
+        self.assertTrue(profile.getboolean("DHCPv4", "UseMTU"))
+
     def test_static_image_import_needs_no_unprovisioned_scratch_volume(self):
         root = next(
             d
