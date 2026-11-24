@@ -61,7 +61,12 @@ class ManifestTests(unittest.TestCase):
                 )
 
     def test_one_vm_with_retained_separate_disks_and_git_power(self):
-        vms = [d for d in self.resources if d["kind"] == "VirtualMachine"]
+        vms = [
+            d
+            for d in self.resources
+            if d["kind"] == "VirtualMachine"
+            and d["metadata"]["namespace"] == "actual-pilot"
+        ]
         self.assertEqual(len(vms), 1)
         self.assertIn(vms[0]["spec"]["runStrategy"], ("Always", "Halted"))
         volumes = vms[0]["spec"]["template"]["spec"]["volumes"]
@@ -69,7 +74,12 @@ class ManifestTests(unittest.TestCase):
             [v["dataVolume"]["name"] for v in volumes if "dataVolume" in v],
             ["actual-pilot-root", "actual-pilot-data"],
         )
-        pvs = [d for d in self.resources if d["kind"] == "PersistentVolume"]
+        pvs = [
+            d
+            for d in self.resources
+            if d["kind"] == "PersistentVolume"
+            and d["spec"]["claimRef"]["namespace"] == "actual-pilot"
+        ]
         self.assertEqual(len(pvs), 2)
         for pv in pvs:
             self.assertEqual(pv["spec"]["persistentVolumeReclaimPolicy"], "Retain")
@@ -80,7 +90,12 @@ class ManifestTests(unittest.TestCase):
             )
         layer = next(d for d in self.layers if d["metadata"]["name"] == "pilot-storage")
         self.assertFalse(layer["spec"]["prune"])
-        dvs = [d for d in self.resources if d["kind"] == "DataVolume"]
+        dvs = [
+            d
+            for d in self.resources
+            if d["kind"] == "DataVolume"
+            and d["metadata"]["namespace"] == "actual-pilot"
+        ]
         self.assertEqual(
             {d["spec"]["pvc"]["volumeName"] for d in dvs},
             {d["metadata"]["name"] for d in pvs},
@@ -182,7 +197,11 @@ class ManifestTests(unittest.TestCase):
         )
 
     def test_cloud_init_is_nonsecret_provisioning_with_a_pinned_app(self):
-        secrets = [d for d in self.resources if d["kind"] == "Secret"]
+        secrets = [
+            d
+            for d in self.resources
+            if d["kind"] == "Secret" and d["metadata"]["namespace"] == "actual-pilot"
+        ]
         self.assertEqual(len(secrets), 1)
         self.assertEqual(secrets[0]["metadata"]["name"], "actual-pilot-cloudinit")
         data = yaml.safe_load(base64.b64decode(secrets[0]["data"]["userdata"]))

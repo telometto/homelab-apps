@@ -109,3 +109,9 @@ offline systemd dependency graph. Health expressions run against the exact
 CEL-Go version used by the pinned Flux controller. It does not read the legacy
 secret files or contact a Kubernetes API. A matching GitHub workflow runs
 it for changes to the pilot.
+
+## Additional staged previews
+
+[SearxNG](searx-preview/README.md) is prepared in independently suspended storage
+and application layers. Its host preparation is disabled separately. Publishing
+these declarations does not import a disk or start another VM.

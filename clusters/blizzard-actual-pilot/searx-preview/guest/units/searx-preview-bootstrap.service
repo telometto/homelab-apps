@@ -1,0 +1,20 @@
+[Unit]
+Description=Provision the private SearxNG preview guest
+After=network-online.target cloud-final.service
+Wants=network-online.target
+ConditionPathExists=!/var/lib/searx-preview/bootstrap.done
+StartLimitIntervalSec=3600
+StartLimitBurst=3
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/local/lib/searx-preview/bootstrap.sh
+StandardOutput=journal+console
+StandardError=journal+console
+TimeoutStartSec=1200
+Restart=on-failure
+RestartSec=30
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

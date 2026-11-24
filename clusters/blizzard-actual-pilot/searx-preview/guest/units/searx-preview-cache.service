@@ -1,0 +1,19 @@
+[Unit]
+Description=Disposable loopback-only SearxNG preview cache
+Before=searx-preview.service
+
+[Service]
+Type=simple
+User=valkey
+Group=valkey
+RuntimeDirectory=searx-preview-cache
+RuntimeDirectoryMode=0700
+ExecStart=/usr/bin/valkey-server /etc/searx-preview/valkey.conf
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/run/searx-preview-cache
+UMask=0077

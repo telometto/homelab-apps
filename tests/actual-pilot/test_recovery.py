@@ -24,6 +24,60 @@ def payload_files():
     }
 
 
+def verify_guest_units(files, names):
+    binary = Path(shutil.which("systemd-analyze")).resolve()
+    system_units = binary.parent.parent / "example/systemd/system"
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory)
+        units = path / "etc/systemd/system"
+        units.mkdir(parents=True)
+        for unit in system_units.iterdir():
+            if unit.is_file():
+                (units / unit.name).write_text(unit.read_text())
+        (path / "run/systemd").mkdir(parents=True)
+        (path / "bin").mkdir()
+        (path / "bin/true").touch(mode=0o755)
+        for name in names:
+            (units / name).write_text(files["/etc/systemd/system/" + name])
+        for unit in units.iterdir():
+            # Only replace executable paths absent from the test host. Keep
+            # every real boot dependency/default to check the actual graph.
+            content = (
+                "\n".join(
+                    line.split("=", 1)[0] + "=/bin/true"
+                    if line.startswith("Exec")
+                    else line
+                    for line in unit.read_text().splitlines()
+                )
+                + "\n"
+            )
+            unit.write_text(content)
+        environment = {**os.environ, "SYSTEMD_UNIT_PATH": "/etc/systemd/system"}
+        if redirect := os.environ.get("ACTUAL_PILOT_TEST_LIBREDIRECT"):
+            # The offline manager still initializes /run/systemd even with
+            # --root. Keep that metadata inside scratch in Nix's sandbox.
+            environment.update(LD_PRELOAD=redirect, NIX_REDIRECTS=f"/run={path}/run")
+        result = subprocess.run(
+            [
+                str(binary),
+                "--system",
+                f"--root={path}",
+                "--generators=no",
+                "--man=no",
+                "verify",
+                names[0],
+            ],
+            env=environment,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise AssertionError(result.stderr)
+        if "ordering cycle" in result.stderr.lower():
+            raise AssertionError(result.stderr)
+
+
 class RecoveryTests(unittest.TestCase):
     def test_guest_network_profile_survives_launcher_mac_changes(self):
         files = payload_files()
@@ -229,62 +283,14 @@ class RecoveryTests(unittest.TestCase):
         )
 
     def test_enabled_guest_service_has_no_boot_order_cycle(self):
-        files = payload_files()
-        binary = Path(shutil.which("systemd-analyze")).resolve()
-        system_units = binary.parent.parent / "example/systemd/system"
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory)
-            units = path / "etc/systemd/system"
-            units.mkdir(parents=True)
-            for unit in system_units.iterdir():
-                if unit.is_file():
-                    (units / unit.name).write_text(unit.read_text())
-            (path / "run/systemd").mkdir(parents=True)
-            (path / "bin").mkdir()
-            (path / "bin/true").touch(mode=0o755)
-            for name in (
+        verify_guest_units(
+            payload_files(),
+            [
                 "actual-pilot.service",
                 "actual-pilot-prepare-data.service",
                 "srv-actual.mount",
-            ):
-                (units / name).write_text(files["/etc/systemd/system/" + name])
-            for unit in units.iterdir():
-                # Only replace executable paths absent from the test host. Keep
-                # every real boot dependency/default to check the actual graph.
-                content = (
-                    "\n".join(
-                        line.split("=", 1)[0] + "=/bin/true"
-                        if line.startswith("Exec")
-                        else line
-                        for line in unit.read_text().splitlines()
-                    )
-                    + "\n"
-                )
-                unit.write_text(content)
-            environment = {**os.environ, "SYSTEMD_UNIT_PATH": "/etc/systemd/system"}
-            if redirect := os.environ.get("ACTUAL_PILOT_TEST_LIBREDIRECT"):
-                # The offline manager still initializes /run/systemd even with
-                # --root. Keep that metadata inside scratch in Nix's sandbox.
-                environment.update(
-                    LD_PRELOAD=redirect, NIX_REDIRECTS=f"/run={path}/run"
-                )
-            result = subprocess.run(
-                [
-                    str(binary),
-                    "--system",
-                    f"--root={path}",
-                    "--generators=no",
-                    "--man=no",
-                    "verify",
-                    "actual-pilot.service",
-                ],
-                env=environment,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertNotIn("ordering cycle", result.stderr.lower())
+            ],
+        )
 
     def test_image_preparation_handles_cache_and_registry_with_debian_podman(self):
         unit = payload_files()["/etc/systemd/system/actual-pilot.service"]
