@@ -8,7 +8,7 @@ metadata:
   labels:
     app.kubernetes.io/name: actual-pilot
 spec:
-  runStrategy: Always
+  runStrategy: Halted
   template:
     metadata:
       labels:
