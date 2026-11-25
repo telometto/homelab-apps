@@ -1,0 +1,75 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: searx-preview
+  namespace: searx-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  labels:
+    app.kubernetes.io/name: searx-preview
+spec:
+  runStrategy: Always
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: searx-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 1
+        memory:
+          guest: 2Gi
+        resources:
+          requests:
+            memory: 2Gi
+            cpu: 250m
+          limits:
+            memory: 2560Mi
+            cpu: '1'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: searx-preview-root
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: searx-config
+          - name: cloudinit
+            disk:
+              bus: virtio
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: http
+              port: 8080
+              protocol: TCP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: searx-preview-root
+      - name: desired-config
+        configMap:
+          name: searx-preview-desired
+          volumeLabel: SEARXCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: searx-preview-cloudinit
+      readinessProbe:
+        httpGet:
+          port: 8080
+          path: /healthz
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 90

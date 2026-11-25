@@ -1,0 +1,9 @@
+[Unit]
+Description=Read-only public SearxNG desired configuration disk
+
+[Mount]
+What=/dev/disk/by-id/virtio-searx-config
+Where=/run/searx-preview-config
+Type=iso9660
+Options=ro,nodev,nosuid,noexec
+TimeoutSec=60

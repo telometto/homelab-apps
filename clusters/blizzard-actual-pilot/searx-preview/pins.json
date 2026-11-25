@@ -1,0 +1,20 @@
+{
+  "application": {
+    "repository": "ghcr.io/searxng/searxng",
+    "digest": "sha256:a7fc607aa6723f5a8982105bcc5ffba4d1b9fc7c6922a31a88d6e4cba49ef12a",
+    "version": "2026.11.23-a7163d091",
+    "sourceRevision": "a7163d091037cae586c444b05f22ecca162bb492",
+    "sourceSettingsSha256": "13c09c2f4a80d92efceaa1b30608064bfe5717abc86fd668afffb1cf0e1d0e34"
+  },
+  "base": {
+    "reference": "quay.io/containerdisks/debian@sha256:90b09aed0bbca79adf4ebb2445b548332dee59a600de20038639747526a44ba7",
+    "distribution": "Debian 13 (trixie)",
+    "pullMethod": "node"
+  },
+  "sources": [
+    "https://github.com/searxng/searxng/tree/a7163d091037cae586c444b05f22ecca162bb492",
+    "https://docs.searxng.org/admin/installation-docker.html",
+    "https://docs.searxng.org/admin/settings/settings_plugins.html",
+    "https://kubevirt.io/user-guide/storage/disks_and_volumes/#configmap"
+  ]
+}
