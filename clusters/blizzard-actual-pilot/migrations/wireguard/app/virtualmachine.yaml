@@ -1,0 +1,74 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: wireguard-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: wireguard-preview
+  labels:
+    app.kubernetes.io/name: wireguard-preview
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: wireguard-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 1
+        memory:
+          guest: 512Mi
+        resources:
+          requests:
+            memory: 512Mi
+            cpu: 250m
+          limits:
+            memory: 1024Mi
+            cpu: '1'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: gw0de30cab4cc9087587
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: gwe83e8277e755c306d7
+          - name: cloudinit
+            disk:
+              bus: virtio
+            serial: gwe035f0d60c85e71ec2
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: primary
+              port: 56943
+              protocol: UDP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: wireguard-preview-root
+      - name: desired-config
+        configMap:
+          name: wireguard-preview-desired
+          volumeLabel: GROUNDCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: wireguard-preview-cloudinit
+      readinessProbe:
+        exec:
+          command:
+          - /usr/bin/false
+        initialDelaySeconds: 15
+        periodSeconds: 10
