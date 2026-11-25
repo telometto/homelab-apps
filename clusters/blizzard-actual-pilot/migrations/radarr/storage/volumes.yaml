@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: radarr-preview-root
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  capacity:
+    storage: 20480Mi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: radarr-preview-local
+  local:
+    path: /flash/enc/vms/kubevirt-pilot/radarr-preview/root
+  claimRef:
+    namespace: radarr-preview
+    name: radarr-preview-root
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - blizzard
+---
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: radarr-preview-root
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: radarr-preview
+spec:
+  source:
+    registry:
+      url: docker://quay.io/containerdisks/debian@sha256:90b09aed0bbca79adf4ebb2445b548332dee59a600de20038639747526a44ba7
+      pullMethod: node
+  pvc:
+    storageClassName: radarr-preview-local
+    volumeName: radarr-preview-root
+    volumeMode: Filesystem
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 20480Mi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: radarr-preview-data
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  capacity:
+    storage: 10240Mi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: radarr-preview-local
+  local:
+    path: /flash/enc/vms/kubevirt-pilot/radarr-preview/data
+  claimRef:
+    namespace: radarr-preview
+    name: radarr-preview-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - blizzard
+---
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: radarr-preview-data
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: radarr-preview
+spec:
+  source:
+    blank: {}
+  pvc:
+    storageClassName: radarr-preview-local
+    volumeName: radarr-preview-data
+    volumeMode: Filesystem
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10240Mi
