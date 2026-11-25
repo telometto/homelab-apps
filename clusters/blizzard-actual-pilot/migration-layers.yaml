@@ -1,0 +1,783 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-bazarr-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/bazarr/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-bazarr-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/bazarr/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-bazarr-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-cross-seed-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/cross-seed/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-cross-seed-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/cross-seed/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-cross-seed-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-firefox-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/firefox/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-firefox-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/firefox/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-firefox-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-gitea-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/gitea/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-gitea-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/gitea/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-gitea-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-immich-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/immich/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-immich-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/immich/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-immich-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-jellyfin-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/jellyfin/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-jellyfin-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/jellyfin/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-jellyfin-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-matrix-synapse-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/matrix-synapse/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-matrix-synapse-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/matrix-synapse/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-matrix-synapse-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-pocket-id-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/pocket-id/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-pocket-id-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/pocket-id/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-pocket-id-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-prowlarr-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/prowlarr/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-prowlarr-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/prowlarr/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-prowlarr-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-qbittorrent-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/qbittorrent/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-qbittorrent-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/qbittorrent/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-qbittorrent-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-radarr-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/radarr/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-radarr-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/radarr/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-radarr-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-readarr-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/readarr/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-readarr-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/readarr/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-readarr-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-sabnzbd-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/sabnzbd/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-sabnzbd-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/sabnzbd/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-sabnzbd-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-seerr-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/seerr/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-seerr-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/seerr/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-seerr-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-sonarr-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/sonarr/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-sonarr-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/sonarr/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-sonarr-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-wireguard-storage
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/wireguard/storage
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-cdi
+  healthCheckExprs:
+  - apiVersion: cdi.kubevirt.io/v1beta1
+    kind: DataVolume
+    current: has(status.phase) && status.phase == 'Succeeded'
+    failed: has(status.phase) && status.phase == 'Failed'
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pilot-wireguard-app
+  namespace: flux-system
+spec:
+  interval: 2m
+  path: ./clusters/blizzard-actual-pilot/migrations/wireguard/app
+  prune: false
+  suspend: true
+  sourceRef:
+    kind: GitRepository
+    name: actual-pilot
+  wait: true
+  timeout: 20m
+  dependsOn:
+  - name: pilot-kubevirt
+  - name: pilot-wireguard-storage
+  healthCheckExprs:
+  - apiVersion: kubevirt.io/v1
+    kind: VirtualMachine
+    current: ((spec.runStrategy == 'Halted' && has(status.printableStatus) && status.printableStatus
+      == 'Stopped') || (spec.runStrategy == 'Always' && has(status.ready) && status.ready))
+    failed: has(status.conditions) && status.conditions.exists(c, c.type == 'Failure'
+      && c.status == 'True')

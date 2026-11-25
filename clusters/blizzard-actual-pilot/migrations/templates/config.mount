@@ -1,0 +1,9 @@
+[Unit]
+Description=Read-only public preview configuration disk
+
+[Mount]
+What=/dev/disk/by-id/virtio-@SERIAL@
+Where=/run/kubevirt-groundwork-config
+Type=iso9660
+Options=ro,nodev,nosuid,noexec
+TimeoutSec=60

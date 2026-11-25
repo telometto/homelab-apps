@@ -1,0 +1,8 @@
+[Match]
+Name=enp1s0
+
+[Network]
+DHCP=yes
+
+[DHCPv4]
+UseMTU=yes

@@ -4,3 +4,4 @@ resources:
 - namespaces.yaml
 - sync.yaml
 - layers.yaml
+- migration-layers.yaml

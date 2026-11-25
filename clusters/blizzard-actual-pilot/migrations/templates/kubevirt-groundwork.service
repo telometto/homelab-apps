@@ -1,0 +1,13 @@
+[Unit]
+Description=Explicitly gated per-boot preview runtime
+Requires=run-kubevirt\x2dgroundwork\x2dconfig.mount
+After=run-kubevirt\x2dgroundwork\x2dconfig.mount
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/kubevirt-groundwork/loader.py --service @SERVICE@
+RemainAfterExit=yes
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

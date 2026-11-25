@@ -213,7 +213,7 @@ class SearxManifestTests(unittest.TestCase):
         self.assertTrue(setup[0].endswith("runner.py prepare"))
         self.assertTrue(setup[-1].endswith("runner.py wait-cache"))
 
-    def test_seed_matches_canonical_files_and_only_two_vms_are_declared(self):
+    def test_seed_matches_canonical_files_and_reference_namespaces_have_two_vms(self):
         path = PREVIEW / "guest/render.py"
         self.assertTrue(path.is_file())
         spec = importlib.util.spec_from_file_location("render_searx", path)
@@ -230,6 +230,7 @@ class SearxManifestTests(unittest.TestCase):
             for layer in layers
             for r in build(ROOT.parents[1] / layer["spec"]["path"])
             if r["kind"] == "VirtualMachine"
+            and r["metadata"]["namespace"] in {"actual-pilot", "searx-preview"}
         ]
         self.assertCountEqual(
             [(v["metadata"]["namespace"], v["metadata"]["name"]) for v in vms],
