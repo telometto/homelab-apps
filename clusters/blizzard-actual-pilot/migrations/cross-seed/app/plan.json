@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "cross-seed",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "cross-seed-preview",
+  "freshDisks": [
+    "root",
+    "data"
+  ],
+  "profile": {
+    "id": "cross-seed",
+    "legacyVm": "cross-seed",
+    "namespace": "cross-seed-preview",
+    "cpu": 1,
+    "memoryMiB": 1024,
+    "port": 11032,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 2048,
+        "mountPoint": "/var/lib/cross-seed",
+        "legacyImage": "cross-seed-state.img",
+        "sources": [
+          {
+            "path": "vms/cross-seed.nix",
+            "line": 23
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/mkMicrovmConfig.nix",
+            "line": 33
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/cross-seed.nix",
+      "modules/services/cross-seed.nix",
+      "vms/sops-base.nix",
+      "vms/media-storage.nix",
+      "docs/cross-seed.md",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [
+      {
+        "protocol": "virtiofs",
+        "source_path": "/rpool/unenc/media/data",
+        "mount_point": "/data",
+        "tag": "media-data",
+        "read_only_declared": null,
+        "provenance": [
+          {
+            "path": "vms/cross-seed.nix",
+            "line": 27
+          },
+          {
+            "path": "vms/media-storage.nix",
+            "line": 2
+          }
+        ],
+        "derivation_note": "Imported mediaStorage.share. No readOnly attribute is declared."
+      }
+    ],
+    "dependencies": [
+      {
+        "kind": "automation",
+        "detail": "Private Prowlarr/qBittorrent APIs; local API binds guest loopback only, with no public publication or host forward.",
+        "provenance": [
+          {
+            "path": "vms/cross-seed.nix"
+          },
+          {
+            "path": "modules/services/cross-seed.nix"
+          },
+          {
+            "path": "hosts/blizzard/virtualisation/microvms.nix"
+          }
+        ]
+      },
+      {
+        "kind": "credentials",
+        "detail": "Private SOPS settings and startup ordering are declared; no values were read.",
+        "provenance": [
+          {
+            "path": "vms/cross-seed.nix"
+          },
+          {
+            "path": "modules/services/cross-seed.nix"
+          },
+          {
+            "path": "vms/sops-base.nix"
+          }
+        ]
+      },
+      {
+        "kind": "hardlinks",
+        "detail": "/data/cross-seed must share the same filesystem and users group as qBittorrent payloads; preserve setgid/umask.",
+        "provenance": [
+          {
+            "path": "modules/services/cross-seed.nix"
+          },
+          {
+            "path": "vms/media-storage.nix"
+          },
+          {
+            "path": "hosts/blizzard/storage/media.nix"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Keep fresh preview daemon disabled until credential, hardlink/ACL and API gates pass; current MicroVM source enables it.",
+      "Prove complete-content-only injection, full recheck, zero-missing-byte resume and incomplete-candidate rejection with disposable content.",
+      "Validate independent stopped state restore; keep unverified automation disconnected from production APIs."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Keep fresh preview daemon disabled until credential, hardlink/ACL and API gates pass; current MicroVM source enables it.",
+    "Prove complete-content-only injection, full recheck, zero-missing-byte resume and incomplete-candidate rejection with disposable content.",
+    "Validate independent stopped state restore; keep unverified automation disconnected from production APIs."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}

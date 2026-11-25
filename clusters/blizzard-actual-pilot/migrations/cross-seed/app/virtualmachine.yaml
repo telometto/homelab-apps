@@ -1,0 +1,81 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: cross-seed-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: cross-seed-preview
+  labels:
+    app.kubernetes.io/name: cross-seed-preview
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cross-seed-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 1
+        memory:
+          guest: 1024Mi
+        resources:
+          requests:
+            memory: 1024Mi
+            cpu: 250m
+          limits:
+            memory: 1536Mi
+            cpu: '1'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: gw17accbfec823ca7683
+          - name: data
+            disk:
+              bus: virtio
+            serial: gw78ae9a38e79a74b06a
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: gw9bab29749ed805c6f9
+          - name: cloudinit
+            disk:
+              bus: virtio
+            serial: gwc6d2e4a9b4380b82c8
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: primary
+              port: 11032
+              protocol: TCP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: cross-seed-preview-root
+      - name: data
+        dataVolume:
+          name: cross-seed-preview-data
+      - name: desired-config
+        configMap:
+          name: cross-seed-preview-desired
+          volumeLabel: GROUNDCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: cross-seed-preview-cloudinit
+      readinessProbe:
+        exec:
+          command:
+          - /usr/bin/false
+        initialDelaySeconds: 15
+        periodSeconds: 10
