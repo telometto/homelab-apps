@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cross-seed-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: cross-seed-preview
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: cross-seed-preview
+  ports:
+  - name: primary
+    port: 11032
+    protocol: TCP
+    targetPort: 11032
