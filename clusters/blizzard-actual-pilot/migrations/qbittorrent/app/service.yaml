@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: qbittorrent-preview
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: qbittorrent-preview
+  ports:
+  - name: primary
+    port: 11030
+    protocol: TCP
+    targetPort: 11030
