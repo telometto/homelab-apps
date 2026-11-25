@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "immich",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "immich-preview",
+  "freshDisks": [
+    "root",
+    "data",
+    "postgresql"
+  ],
+  "profile": {
+    "id": "immich",
+    "legacyVm": "immich",
+    "namespace": "immich-preview",
+    "cpu": 4,
+    "memoryMiB": 8192,
+    "port": 11070,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 1048576,
+        "mountPoint": "/var/lib/immich",
+        "legacyImage": "immich-state.img",
+        "sources": [
+          {
+            "path": "vms/immich-storage.nix",
+            "line": 6
+          }
+        ]
+      },
+      {
+        "name": "postgresql",
+        "sizeMiB": 10240,
+        "mountPoint": "/var/lib/postgresql",
+        "legacyImage": "postgresql-state.img",
+        "sources": [
+          {
+            "path": "vms/immich-storage.nix",
+            "line": 12
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/immich-storage.nix",
+            "line": 20
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/immich.nix",
+      "vms/immich-storage.nix",
+      "modules/services/immich.nix",
+      "vms/sops-base.nix",
+      "docs/immich.md",
+      "docs/immich-backup.md",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [],
+    "dependencies": [
+      {
+        "kind": "database-library",
+        "detail": "Local PostgreSQL plus 1 TiB-declared library/state image; no external media virtiofs share.",
+        "provenance": [
+          {
+            "path": "vms/immich.nix"
+          },
+          {
+            "path": "vms/immich-storage.nix"
+          }
+        ]
+      },
+      {
+        "kind": "oidc",
+        "detail": "Pocket ID sole interactive login, restricted client group, stable subject linking and private client secret.",
+        "provenance": [
+          {
+            "path": "vms/immich.nix"
+          },
+          {
+            "path": "docs/immich.md"
+          }
+        ]
+      },
+      {
+        "kind": "ml",
+        "detail": "Local ML disabled; Blizzard host proxy on port 3003 relays requests to Kaizer over Tailscale.",
+        "provenance": [
+          {
+            "path": "vms/immich.nix"
+          },
+          {
+            "path": "hosts/blizzard/virtualisation/microvms.nix"
+          }
+        ]
+      },
+      {
+        "kind": "ingress",
+        "detail": "Managed immich-web publication and direct LAN TCP 11070 host forward.",
+        "provenance": [
+          {
+            "path": "hosts/blizzard/virtualisation/microvms.nix"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Pin compatible server/database components; prove library/database-consistent independent restore, ownership and capacity.",
+      "Preserve Pocket ID issuer/client/subject identity and restricted admission; validate browser/mobile authentication privately.",
+      "Validate existing remote ML relay through narrow private access.",
+      "Prove upload/download/derived assets without duplicate production writes before route/data cutover."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Pin compatible server/database components; prove library/database-consistent independent restore, ownership and capacity.",
+    "Preserve Pocket ID issuer/client/subject identity and restricted admission; validate browser/mobile authentication privately.",
+    "Validate existing remote ML relay through narrow private access.",
+    "Prove upload/download/derived assets without duplicate production writes before route/data cutover."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}

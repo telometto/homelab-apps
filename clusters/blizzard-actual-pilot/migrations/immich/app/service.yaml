@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: immich-preview
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: immich-preview
+  ports:
+  - name: primary
+    port: 11070
+    protocol: TCP
+    targetPort: 11070
