@@ -1,3 +1,21 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources: []
+resources:
+- virtualmachine.yaml
+- service.yaml
+- networkpolicy.yaml
+configMapGenerator:
+- name: gitea-preview-desired
+  namespace: gitea-preview
+  files:
+  - plan.json
+  - runtime.sh
+secretGenerator:
+- name: gitea-preview-cloudinit
+  namespace: gitea-preview
+  files:
+  - userdata=user-data.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled

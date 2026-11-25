@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gitea-preview-ingress
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: gitea-preview
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: gitea-preview
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: actual-pilot-probes
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kubevirt
+      podSelector:
+        matchLabels:
+          kubevirt.io: virt-api
+    ports:
+    - port: 11050
+      protocol: TCP
