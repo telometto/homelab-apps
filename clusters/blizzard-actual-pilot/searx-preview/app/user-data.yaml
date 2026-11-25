@@ -1,0 +1,319 @@
+#cloud-config
+disable_root: true
+ssh_pwauth: false
+users:
+- default
+write_files:
+- path: /etc/apt/sources.list.d/debian.sources
+  permissions: '0644'
+  content: |
+    Types: deb
+    URIs: https://deb.debian.org/debian
+    Suites: trixie trixie-updates
+    Components: main
+    Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+    Types: deb
+    URIs: https://security.debian.org/debian-security
+    Suites: trixie-security
+    Components: main
+    Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+- path: /etc/systemd/network/05-searx-preview.network
+  permissions: '0644'
+  content: |
+    # A retained root can outlive the launcher MAC cached by cloud-init.
+    # Match the stable PCI interface before netplan's MAC-bound fallback.
+    [Match]
+    Name=enp1s0
+
+    [Network]
+    DHCP=yes
+    LinkLocalAddressing=ipv6
+
+    [DHCPv4]
+    RouteMetric=100
+    UseMTU=true
+- path: /usr/local/lib/searx-preview/runner.py
+  permissions: '0644'
+  content: |
+    """Read the public configuration disk on each boot; keep identity on this root."""
+
+    import json
+    import os
+    import re
+    import secrets
+    import stat
+    import subprocess
+    import sys
+    import time
+    from pathlib import Path
+
+    CONFIG = Path("/run/searx-preview-config")
+    STATE = Path("/var/lib/searx-preview")
+    IMAGE = re.compile(r"ghcr\.io/searxng/searxng@sha256:[0-9a-f]{64}")
+
+
+    def no_symlinks(path):
+        if any(p.is_symlink() for p in (path, *path.parents)):
+            raise ValueError("preview paths must not contain symlinks")
+
+
+    def desired_image(config):
+        data = json.loads((config / "app.json").read_text())
+        if (
+            set(data) != {"image"}
+            or not isinstance(data["image"], str)
+            or not IMAGE.fullmatch(data["image"])
+        ):
+            raise ValueError("desired image must be an official SearxNG digest reference")
+        return data["image"]
+
+
+    def prepare(config=CONFIG, state=STATE, uid=977, gid=977):
+        image = desired_image(config)
+        no_symlinks(state)
+        identity = state / "secret.env"
+        for path in (identity, state / "config", state / "cache"):
+            no_symlinks(path)
+        if identity.exists():
+            info = identity.stat()
+            if (
+                not stat.S_ISREG(info.st_mode)
+                or info.st_size == 0
+                or info.st_mode & 0o077
+                or info.st_uid != os.geteuid()
+            ):
+                raise ValueError("existing preview identity must be a private regular file")
+        # These are public files, copied only into this preview's retained state.
+        contents = {}
+        for name in ("settings.yml", "limiter.toml"):
+            source = config / name
+            if source.is_symlink() or not source.is_file():
+                raise ValueError("configuration disk must contain regular settings files")
+            contents[name] = source.read_bytes()
+            no_symlinks(state / "config" / name)
+        state.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if not identity.exists():
+            descriptor = os.open(identity, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            with os.fdopen(descriptor, "w") as output:
+                output.write("SEARXNG_SECRET=" + secrets.token_hex(32) + "\n")
+        (state / "config").mkdir(mode=0o755, exist_ok=True)
+        for name, content in contents.items():
+            target = state / "config" / name
+            target.write_bytes(content)
+            target.chmod(0o644)
+        cache = state / "cache"
+        cache.mkdir(mode=0o700, exist_ok=True)
+        os.chown(cache, uid, gid)
+        return image
+
+
+    def ensure_image(image, podman="/usr/bin/podman"):
+        cached = subprocess.run([podman, "image", "exists", image], check=False, timeout=20)
+        if cached.returncode == 1:
+            # Debian 13's Podman 5.4 supports plain pull; cached starts stay offline.
+            subprocess.run([podman, "pull", image], check=True, timeout=300)
+        elif cached.returncode != 0:
+            cached.check_returncode()
+
+
+    def wait_cache(cli="/usr/bin/valkey-cli", attempts=30, delay=1):
+        # SearxNG initializes the limiter once and otherwise starts without it.
+        # Type=simple/After alone cannot establish that Valkey is accepting PINGs.
+        for attempt in range(attempts):
+            try:
+                result = subprocess.run(
+                    [cli, "-h", "127.0.0.1", "-p", "6379", "PING"],
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                    timeout=2,
+                )
+                if result.returncode == 0 and result.stdout.strip() == "PONG":
+                    return
+            except subprocess.TimeoutExpired:
+                pass
+            if attempt + 1 < attempts:
+                time.sleep(delay)
+        raise RuntimeError("preview cache is not ready; refusing to start without limiter")
+
+
+    def run_command(image, state=STATE):
+        return [
+            "/usr/bin/podman",
+            "run",
+            "--rm",
+            "--replace",
+            "--pull=never",
+            "--name=searx-preview",
+            "--network=host",
+            "--user=977:977",
+            "--cap-drop=all",
+            "--security-opt=no-new-privileges",
+            "--read-only",
+            "--tmpfs=/tmp:rw,nodev,nosuid,noexec,size=64m",
+            "--env-file=" + str(state / "secret.env"),
+            "--env=FORCE_OWNERSHIP=false",
+            "--env=GRANIAN_HOST=0.0.0.0",
+            "--env=GRANIAN_PORT=8080",
+            "--volume=" + str(state / "config") + ":/etc/searxng:ro",
+            "--volume=" + str(state / "cache") + ":/var/cache/searxng:rw",
+            image,
+        ]
+
+
+    def main():
+        if sys.argv[1:] == ["prepare"]:
+            ensure_image(prepare())
+        elif sys.argv[1:] == ["wait-cache"]:
+            wait_cache()
+        elif sys.argv[1:] == ["run"]:
+            command = run_command(desired_image(CONFIG))
+            os.execv(command[0], command)
+        else:
+            raise ValueError("use prepare, wait-cache or run")
+
+
+    if __name__ == "__main__":
+        main()
+- path: /usr/local/lib/searx-preview/bootstrap.sh
+  permissions: '0644'
+  content: |
+    #!/bin/bash
+    set -euo pipefail
+
+    if [ -e /var/lib/searx-preview/bootstrap.done ]; then
+      exit 0
+    fi
+
+    export DEBIAN_FRONTEND=noninteractive
+    timeout 300 apt-get -o Acquire::Retries=2 -o Acquire::https::Timeout=20 update
+    timeout 480 apt-get -o Acquire::Retries=2 -o Acquire::https::Timeout=20 install -y \
+      qemu-guest-agent podman curl valkey-server ufw apparmor unattended-upgrades
+
+    ufw default deny incoming
+    ufw default deny routed
+    ufw default allow outgoing
+    ufw allow 8080/tcp
+    ufw --force enable
+    systemctl enable --now qemu-guest-agent apparmor unattended-upgrades
+    # Use a dedicated loopback-only, disposable cache instead of distro persistence.
+    systemctl disable --now valkey-server.service
+    systemctl daemon-reload
+    systemctl enable --now searx-preview.service
+
+    for attempt in $(seq 1 60); do
+      if curl --fail --silent --max-time 5 http://127.0.0.1:8080/healthz > /dev/null; then
+        install -d -m 0700 /var/lib/searx-preview
+        touch /var/lib/searx-preview/bootstrap.done
+        echo 'SearxNG preview bootstrap complete'
+        exit 0
+      fi
+      echo "Waiting for SearxNG ($attempt/60)"
+      sleep 2
+    done
+    echo 'SearxNG did not become ready; inspect searx-preview.service' >&2
+    exit 1
+- path: /etc/systemd/system/run-searx\x2dpreview\x2dconfig.mount
+  permissions: '0644'
+  content: |
+    [Unit]
+    Description=Read-only public SearxNG desired configuration disk
+
+    [Mount]
+    What=/dev/disk/by-id/virtio-searx-config
+    Where=/run/searx-preview-config
+    Type=iso9660
+    Options=ro,nodev,nosuid,noexec
+    TimeoutSec=60
+- path: /etc/systemd/system/searx-preview-bootstrap.service
+  permissions: '0644'
+  content: |
+    [Unit]
+    Description=Provision the private SearxNG preview guest
+    After=network-online.target cloud-final.service
+    Wants=network-online.target
+    ConditionPathExists=!/var/lib/searx-preview/bootstrap.done
+    StartLimitIntervalSec=3600
+    StartLimitBurst=3
+
+    [Service]
+    Type=oneshot
+    ExecStart=/bin/bash /usr/local/lib/searx-preview/bootstrap.sh
+    StandardOutput=journal+console
+    StandardError=journal+console
+    TimeoutStartSec=1200
+    Restart=on-failure
+    RestartSec=30
+    RemainAfterExit=yes
+
+    [Install]
+    WantedBy=multi-user.target
+- path: /etc/systemd/system/searx-preview-cache.service
+  permissions: '0644'
+  content: |
+    [Unit]
+    Description=Disposable loopback-only SearxNG preview cache
+    Before=searx-preview.service
+
+    [Service]
+    Type=simple
+    User=valkey
+    Group=valkey
+    RuntimeDirectory=searx-preview-cache
+    RuntimeDirectoryMode=0700
+    ExecStart=/usr/bin/valkey-server /etc/searx-preview/valkey.conf
+    Restart=on-failure
+    RestartSec=3
+    NoNewPrivileges=true
+    ProtectSystem=strict
+    ProtectHome=true
+    PrivateTmp=true
+    ReadWritePaths=/run/searx-preview-cache
+    UMask=0077
+- path: /etc/systemd/system/searx-preview.service
+  permissions: '0644'
+  content: |
+    [Unit]
+    Description=Private SearxNG migration preview
+    Requires=run-searx\x2dpreview\x2dconfig.mount searx-preview-cache.service
+    After=run-searx\x2dpreview\x2dconfig.mount searx-preview-cache.service network-online.target
+    Wants=network-online.target
+    StartLimitIntervalSec=600
+    StartLimitBurst=3
+
+    [Service]
+    Type=simple
+    ExecStartPre=/usr/bin/python3 /usr/local/lib/searx-preview/runner.py prepare
+    ExecStartPre=/usr/bin/python3 /usr/local/lib/searx-preview/runner.py wait-cache
+    ExecStart=/usr/bin/python3 /usr/local/lib/searx-preview/runner.py run
+    ExecStop=-/usr/bin/podman stop --time 30 searx-preview
+    Restart=on-failure
+    RestartSec=10
+    TimeoutStartSec=360
+    TimeoutStopSec=45
+
+    [Install]
+    WantedBy=multi-user.target
+- path: /etc/searx-preview/valkey.conf
+  permissions: '0644'
+  content: |
+    bind 127.0.0.1
+    port 6379
+    protected-mode yes
+    save ""
+    appendonly no
+    dir /run/searx-preview-cache
+    maxmemory 128mb
+    maxmemory-policy allkeys-lru
+    logfile ""
+runcmd:
+- - systemctl
+  - daemon-reload
+- - systemctl
+  - enable
+  - searx-preview-bootstrap.service
+- - systemctl
+  - start
+  - --no-block
+  - searx-preview-bootstrap.service

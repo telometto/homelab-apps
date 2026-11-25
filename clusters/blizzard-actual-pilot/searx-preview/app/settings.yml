@@ -1,0 +1,123 @@
+use_default_settings: true
+general:
+  debug: false
+  instance_name: SearxNG private preview
+  enable_metrics: false
+server:
+  limiter: true
+  image_proxy: true
+  method: POST
+  public_instance: false
+valkey:
+  url: valkey://127.0.0.1:6379/0
+ui:
+  static_use_hash: true
+  default_locale: en
+  query_in_title: true
+  center_alignment: true
+  default_theme: simple
+  theme_args:
+    simple_style: auto
+  search_on_category_select: false
+  hotkeys: vim
+search:
+  safe_search: 0
+  autocomplete_min: 2
+  autocomplete: startpage
+  ban_time_on_fail: 5
+  max_ban_time_on_fail: 120
+  formats:
+  - html
+  - json
+outgoing:
+  request_timeout: 5.0
+  max_request_timeout: 15.0
+  pool_connections: 100
+  pool_maxsize: 15
+  enable_http2: true
+plugins:
+  searx.plugins.hash_plugin.SXNGPlugin:
+    active: true
+  searx.plugins.tor_check.SXNGPlugin:
+    active: true
+  searx.plugins.tracker_url_remover.SXNGPlugin:
+    active: true
+  searx.plugins.hostnames.SXNGPlugin:
+    active: true
+  searx.plugins.calculator.SXNGPlugin:
+    active: true
+  searx.plugins.unit_converter.SXNGPlugin:
+    active: true
+  searx.plugins.oa_doi_rewrite.SXNGPlugin:
+    active: true
+  searx.plugins.infinite_scroll.SXNGPlugin:
+    active: false
+engines:
+- name: duckduckgo
+  disabled: true
+- name: brave
+  disabled: true
+- name: brave.images
+  disabled: true
+- name: brave.videos
+  disabled: true
+- name: brave.news
+  disabled: true
+- name: startpage
+  disabled: false
+  weight: 2.0
+- name: mojeek
+  disabled: false
+  weight: 1.0
+- name: qwant
+  disabled: false
+  weight: 1.0
+- name: bing
+  disabled: false
+  weight: 0.5
+- name: google
+  disabled: false
+  weight: 0.5
+- name: mwmbl
+  disabled: false
+  weight: 0.4
+- name: ddg definitions
+  disabled: false
+  weight: 2
+- name: wikidata
+  disabled: false
+- name: wikibooks
+  disabled: false
+- name: wikipedia
+  disabled: false
+  weight: 1.5
+- name: bing images
+  disabled: false
+- name: google images
+  disabled: false
+- name: duckduckgo images
+  disabled: true
+- name: unsplash
+  disabled: false
+- name: openverse
+  disabled: false
+- name: wikicommons.images
+  disabled: false
+- name: bing videos
+  disabled: false
+- name: google videos
+  disabled: false
+- name: youtube
+  disabled: false
+- name: peertube
+  disabled: false
+- name: sepiasearch
+  disabled: false
+- name: yacy images
+  disabled: true
+- name: ahmia
+  disabled: true
+- name: torch
+  disabled: true
+- name: google news
+  disabled: true

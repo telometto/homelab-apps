@@ -48,6 +48,7 @@ pkgs.runCommand "actual-pilot-manifests"
     export ACTUAL_PILOT_TEST_LIBREDIRECT=${pkgs.libredirect}/lib/libredirect.so
     python -m unittest discover -s tests/actual-pilot -v
     shellcheck clusters/blizzard-actual-pilot/actual/guest/bootstrap.sh
+    shellcheck clusters/blizzard-actual-pilot/searx-preview/guest/bootstrap.sh
     shellcheck clusters/blizzard-actual-pilot/migrations/templates/runtime.sh
     touch "$out"
   ''
