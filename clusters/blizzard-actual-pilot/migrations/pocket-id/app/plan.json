@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "pocket-id",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "pocket-id-preview",
+  "freshDisks": [
+    "root",
+    "data"
+  ],
+  "profile": {
+    "id": "pocket-id",
+    "legacyVm": "pocket-id",
+    "namespace": "pocket-id-preview",
+    "cpu": 1,
+    "memoryMiB": 1024,
+    "port": 11081,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 2048,
+        "mountPoint": "/var/lib/pocket-id",
+        "legacyImage": "pocket-id-state.img",
+        "sources": [
+          {
+            "path": "vms/pocket-id.nix",
+            "line": 24
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/mkMicrovmConfig.nix",
+            "line": 33
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/pocket-id.nix",
+      "vms/sops-base.nix",
+      "docs/pocket-id.md",
+      "docs/pocket-id-migration-plan.md",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [],
+    "dependencies": [
+      {
+        "kind": "identity",
+        "detail": "SQLite database and uploads are in state image; encryption key is delivered privately through SOPS.",
+        "provenance": [
+          {
+            "path": "vms/pocket-id.nix"
+          }
+        ]
+      },
+      {
+        "kind": "isolation",
+        "detail": "Dedicated pocket-id-br0 bridge; backend/SSH accepted only from host proxy side; client-IP trust depends on this boundary.",
+        "provenance": [
+          {
+            "path": "vms/vm-registry.nix"
+          },
+          {
+            "path": "vms/pocket-id.nix"
+          },
+          {
+            "path": "hosts/blizzard/virtualisation/microvms.nix"
+          }
+        ]
+      },
+      {
+        "kind": "oidc",
+        "detail": "Public issuer identity, registered clients/groups and downstream Immich authentication.",
+        "provenance": [
+          {
+            "path": "vms/pocket-id.nix"
+          },
+          {
+            "path": "docs/pocket-id.md"
+          },
+          {
+            "path": "docs/immich.md"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Pin supported version preserving callback enforcement; prove independent database/uploads export/import.",
+      "Preserve encryption/signing/passkey/issuer identity with explicit secret authorization; do not regenerate restored production identity.",
+      "Recreate restricted proxy/client-IP boundary and validate passkeys/discovery/callbacks/downstream admission privately.",
+      "Review public authentication cutover and rollback separately because all downstream logins may be affected."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Pin supported version preserving callback enforcement; prove independent database/uploads export/import.",
+    "Preserve encryption/signing/passkey/issuer identity with explicit secret authorization; do not regenerate restored production identity.",
+    "Recreate restricted proxy/client-IP boundary and validate passkeys/discovery/callbacks/downstream admission privately.",
+    "Review public authentication cutover and rollback separately because all downstream logins may be affected."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}
