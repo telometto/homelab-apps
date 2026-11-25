@@ -1,0 +1,88 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: immich-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: immich-preview
+  labels:
+    app.kubernetes.io/name: immich-preview
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: immich-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 4
+        memory:
+          guest: 8192Mi
+        resources:
+          requests:
+            memory: 8192Mi
+            cpu: 250m
+          limits:
+            memory: 8704Mi
+            cpu: '4'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: gw2feed107642f9a05b1
+          - name: data
+            disk:
+              bus: virtio
+            serial: gw0dc8bc82409344e4bc
+          - name: postgresql
+            disk:
+              bus: virtio
+            serial: gw6fa1bca39ce1ec028f
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: gwc181dee50b23ee045e
+          - name: cloudinit
+            disk:
+              bus: virtio
+            serial: gw65cc321ce235a0880b
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: primary
+              port: 11070
+              protocol: TCP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: immich-preview-root
+      - name: data
+        dataVolume:
+          name: immich-preview-data
+      - name: postgresql
+        dataVolume:
+          name: immich-preview-postgresql
+      - name: desired-config
+        configMap:
+          name: immich-preview-desired
+          volumeLabel: GROUNDCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: immich-preview-cloudinit
+      readinessProbe:
+        exec:
+          command:
+          - /usr/bin/false
+        initialDelaySeconds: 15
+        periodSeconds: 10
