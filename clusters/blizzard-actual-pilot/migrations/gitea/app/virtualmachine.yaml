@@ -1,0 +1,88 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: gitea-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: gitea-preview
+  labels:
+    app.kubernetes.io/name: gitea-preview
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gitea-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 2
+        memory:
+          guest: 2048Mi
+        resources:
+          requests:
+            memory: 2048Mi
+            cpu: 250m
+          limits:
+            memory: 2560Mi
+            cpu: '2'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: gw98628214cdf8f17bce
+          - name: data
+            disk:
+              bus: virtio
+            serial: gw01c87164a42111a4b4
+          - name: postgresql
+            disk:
+              bus: virtio
+            serial: gwdb3fb8010f84a6bb8b
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: gw48e6b373ce3a1d1c5d
+          - name: cloudinit
+            disk:
+              bus: virtio
+            serial: gw5b5e94ccce5f0d8001
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: primary
+              port: 11050
+              protocol: TCP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: gitea-preview-root
+      - name: data
+        dataVolume:
+          name: gitea-preview-data
+      - name: postgresql
+        dataVolume:
+          name: gitea-preview-postgresql
+      - name: desired-config
+        configMap:
+          name: gitea-preview-desired
+          volumeLabel: GROUNDCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: gitea-preview-cloudinit
+      readinessProbe:
+        exec:
+          command:
+          - /usr/bin/false
+        initialDelaySeconds: 15
+        periodSeconds: 10

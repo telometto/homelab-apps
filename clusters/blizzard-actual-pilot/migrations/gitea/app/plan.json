@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "gitea",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "gitea-preview",
+  "freshDisks": [
+    "root",
+    "data",
+    "postgresql"
+  ],
+  "profile": {
+    "id": "gitea",
+    "legacyVm": "gitea",
+    "namespace": "gitea-preview",
+    "cpu": 2,
+    "memoryMiB": 2048,
+    "port": 11050,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 102400,
+        "mountPoint": "/var/lib/gitea",
+        "legacyImage": "gitea-state.img",
+        "sources": [
+          {
+            "path": "vms/gitea.nix",
+            "line": 25
+          }
+        ]
+      },
+      {
+        "name": "postgresql",
+        "sizeMiB": 10240,
+        "mountPoint": "/var/lib/postgresql",
+        "legacyImage": "postgresql-state.img",
+        "sources": [
+          {
+            "path": "vms/gitea.nix",
+            "line": 30
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/mkMicrovmConfig.nix",
+            "line": 33
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/gitea.nix",
+      "modules/services/gitea.nix",
+      "vms/sops-base.nix",
+      "docs/gitea.md",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [],
+    "dependencies": [
+      {
+        "kind": "database",
+        "detail": "Local PostgreSQL, repositories under /var/lib/gitea/repositories, LFS enabled on local storage.",
+        "provenance": [
+          {
+            "path": "vms/gitea.nix"
+          },
+          {
+            "path": "modules/services/gitea.nix"
+          }
+        ]
+      },
+      {
+        "kind": "credentials",
+        "detail": "SOPS LFS signing secret and application identity require explicit private delivery/preservation.",
+        "provenance": [
+          {
+            "path": "vms/gitea.nix"
+          },
+          {
+            "path": "modules/services/gitea.nix"
+          }
+        ]
+      },
+      {
+        "kind": "ingress",
+        "detail": "Host Tunnel/Traefik gitea-compatible publication and existing HTTPS ROOT_URL. Built-in Gitea SSH is disabled.",
+        "provenance": [
+          {
+            "path": "vms/gitea.nix"
+          },
+          {
+            "path": "hosts/blizzard/virtualisation/microvms.nix"
+          },
+          {
+            "path": "docs/gitea.md"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Pin compatible application/database components preserving the declared Gitea >=1.26 LFS requirement.",
+      "Prove database-consistent independent export/restore of repositories and LFS with preserved identity and no competing writer.",
+      "Validate private Git HTTP push/clone, LFS upload/download and CSP/nonce/auth/CSRF before public cutover."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Pin compatible application/database components preserving the declared Gitea >=1.26 LFS requirement.",
+    "Prove database-consistent independent export/restore of repositories and LFS with preserved identity and no competing writer.",
+    "Validate private Git HTTP push/clone, LFS upload/download and CSP/nonce/auth/CSRF before public cutover."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}
