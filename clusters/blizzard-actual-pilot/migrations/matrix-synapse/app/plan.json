@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "matrix-synapse",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "matrix-synapse-preview",
+  "freshDisks": [
+    "root",
+    "data",
+    "postgresql",
+    "mas",
+    "whatsapp"
+  ],
+  "profile": {
+    "id": "matrix-synapse",
+    "legacyVm": "matrix-synapse",
+    "namespace": "matrix-synapse-preview",
+    "cpu": 4,
+    "memoryMiB": 4096,
+    "port": 11060,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 20480,
+        "mountPoint": "/var/lib/matrix-synapse",
+        "legacyImage": "matrix-synapse-state.img",
+        "sources": [
+          {
+            "path": "vms/matrix-storage.nix",
+            "line": 6
+          }
+        ]
+      },
+      {
+        "name": "postgresql",
+        "sizeMiB": 102400,
+        "mountPoint": "/var/lib/postgresql",
+        "legacyImage": "postgresql-state.img",
+        "sources": [
+          {
+            "path": "vms/matrix-storage.nix",
+            "line": 12
+          }
+        ]
+      },
+      {
+        "name": "mas",
+        "sizeMiB": 1024,
+        "mountPoint": "/var/lib/mas",
+        "legacyImage": "mas-state.img",
+        "sources": [
+          {
+            "path": "vms/matrix-storage.nix",
+            "line": 18
+          }
+        ]
+      },
+      {
+        "name": "whatsapp",
+        "sizeMiB": 10240,
+        "mountPoint": "/var/lib/mautrix-whatsapp",
+        "legacyImage": "mautrix-whatsapp-state.img",
+        "sources": [
+          {
+            "path": "vms/matrix-storage.nix",
+            "line": 33
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/matrix-storage.nix",
+            "line": 26
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/matrix-synapse.nix",
+      "vms/matrix-storage.nix",
+      "vms/matrix-whatsapp.nix",
+      "modules/services/matrix-synapse.nix",
+      "modules/services/matrix-authentication-service.nix",
+      "vms/sops-base.nix",
+      "docs/matrix-hardening-plan.md",
+      "docs/matrix-whatsapp-bridge.md",
+      "docs/matrix-backup.md",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [],
+    "dependencies": [
+      {
+        "kind": "stack",
+        "detail": "Synapse, MAS, local PostgreSQL and Nginx gateway share one VM; Synapse/MAS bind loopback.",
+        "provenance": [
+          {
+            "path": "vms/matrix-synapse.nix"
+          },
+          {
+            "path": "modules/services/matrix-synapse.nix"
+          },
+          {
+            "path": "modules/services/matrix-authentication-service.nix"
+          }
+        ]
+      },
+      {
+        "kind": "bridge",
+        "detail": "Flake constructor enables Mautrix-WhatsApp; dedicated bridge database is in PostgreSQL image and linked-device/crypto state in its own image.",
+        "provenance": [
+          {
+            "path": "vms/flake-microvms.nix"
+          },
+          {
+            "path": "vms/matrix-whatsapp.nix"
+          },
+          {
+            "path": "vms/matrix-storage.nix"
+          }
+        ]
+      },
+      {
+        "kind": "credentials",
+        "detail": "SOPS generators render runtime Synapse/MAS/bridge configs and coordinate rotation; signing/encryption identity needs explicit authorization.",
+        "provenance": [
+          {
+            "path": "vms/matrix-synapse.nix"
+          },
+          {
+            "path": "vms/matrix-whatsapp.nix"
+          },
+          {
+            "path": "vms/sops-base.nix"
+          }
+        ]
+      },
+      {
+        "kind": "network",
+        "detail": "Matrix-compatible host publication reaches Nginx; federation, SMTP and WhatsApp egress require independent acceptance.",
+        "provenance": [
+          {
+            "path": "hosts/blizzard/virtualisation/microvms.nix"
+          },
+          {
+            "path": "vms/matrix-synapse.nix"
+          },
+          {
+            "path": "vms/matrix-whatsapp.nix"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Preserve homeserver/signing/encryption identity and database-consistent Synapse/MAS/media/enabled WhatsApp bridge state via independent restore.",
+      "Implement private credential generation/rotation ordering without secrets in public provisioning.",
+      "Prove delegated login/recovery, federation and proxy/client-IP boundaries in isolation.",
+      "Prove bridge linked-device recovery, paired registration/config coordination and egress filtering; prevent competing bridge writers.",
+      "Review public endpoint cutover and rollback separately."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Preserve homeserver/signing/encryption identity and database-consistent Synapse/MAS/media/enabled WhatsApp bridge state via independent restore.",
+    "Implement private credential generation/rotation ordering without secrets in public provisioning.",
+    "Prove delegated login/recovery, federation and proxy/client-IP boundaries in isolation.",
+    "Prove bridge linked-device recovery, paired registration/config coordination and egress filtering; prevent competing bridge writers.",
+    "Review public endpoint cutover and rollback separately."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}
