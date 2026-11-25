@@ -1,0 +1,81 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: prowlarr-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: prowlarr-preview
+  labels:
+    app.kubernetes.io/name: prowlarr-preview
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prowlarr-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 1
+        memory:
+          guest: 1024Mi
+        resources:
+          requests:
+            memory: 1024Mi
+            cpu: 250m
+          limits:
+            memory: 1536Mi
+            cpu: '1'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: gwc9807246954c5b6590
+          - name: data
+            disk:
+              bus: virtio
+            serial: gw44a2e0baf4f8625f2f
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: gw91b4eab87f2e0b3bfb
+          - name: cloudinit
+            disk:
+              bus: virtio
+            serial: gw5bfa9bceb19696ded7
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: primary
+              port: 11020
+              protocol: TCP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: prowlarr-preview-root
+      - name: data
+        dataVolume:
+          name: prowlarr-preview-data
+      - name: desired-config
+        configMap:
+          name: prowlarr-preview-desired
+          volumeLabel: GROUNDCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: prowlarr-preview-cloudinit
+      readinessProbe:
+        exec:
+          command:
+          - /usr/bin/false
+        initialDelaySeconds: 15
+        periodSeconds: 10
