@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowlarr-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: prowlarr-preview
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: prowlarr-preview
+  ports:
+  - name: primary
+    port: 11020
+    protocol: TCP
+    targetPort: 11020

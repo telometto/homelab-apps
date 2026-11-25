@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "prowlarr",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "prowlarr-preview",
+  "freshDisks": [
+    "root",
+    "data"
+  ],
+  "profile": {
+    "id": "prowlarr",
+    "legacyVm": "prowlarr",
+    "namespace": "prowlarr-preview",
+    "cpu": 1,
+    "memoryMiB": 1024,
+    "port": 11020,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 10240,
+        "mountPoint": "/var/lib/prowlarr",
+        "legacyImage": "prowlarr-state.img",
+        "sources": [
+          {
+            "path": "vms/mkArrVm.nix",
+            "line": 21
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/mkMicrovmConfig.nix",
+            "line": 33
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/prowlarr.nix",
+      "vms/mkArrVm.nix",
+      "modules/services/prowlarr.nix",
+      "lib/arr-service.nix",
+      "lib/arr-services.nix",
+      "modules/services/arr-exporter.nix",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [],
+    "dependencies": [
+      {
+        "kind": "monitoring",
+        "detail": "Enabled Arr exporter opens its own configured guest port; preserve scrape/credential behavior separately from the primary UI.",
+        "provenance": [
+          {
+            "path": "vms/mkArrVm.nix"
+          },
+          {
+            "path": "modules/services/arr-exporter.nix"
+          }
+        ]
+      },
+      {
+        "kind": "companion",
+        "detail": "FlareSolverr runs in prowlarr-vm on 11013; no standalone FlareSolverr VM output.",
+        "provenance": [
+          {
+            "path": "vms/prowlarr.nix"
+          },
+          {
+            "path": "vms/vm-registry.nix"
+          },
+          {
+            "path": "vms/flake-microvms.nix"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Implement both Prowlarr and embedded FlareSolverr with explicit private ports.",
+      "Deliver private indexer/API credentials and prove reciprocal Sonarr/Radarr/Readarr connectivity with narrow peer policies.",
+      "Validate fresh private operation and independent stopped state restore before copying indexer state."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Implement both Prowlarr and embedded FlareSolverr with explicit private ports.",
+    "Deliver private indexer/API credentials and prove reciprocal Sonarr/Radarr/Readarr connectivity with narrow peer policies.",
+    "Validate fresh private operation and independent stopped state restore before copying indexer state."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}
