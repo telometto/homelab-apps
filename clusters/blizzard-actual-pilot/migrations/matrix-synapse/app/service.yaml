@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: matrix-synapse-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: matrix-synapse-preview
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: matrix-synapse-preview
+  ports:
+  - name: primary
+    port: 11060
+    protocol: TCP
+    targetPort: 11060
