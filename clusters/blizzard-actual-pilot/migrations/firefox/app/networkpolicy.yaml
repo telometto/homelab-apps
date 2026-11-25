@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: firefox-preview-ingress
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: firefox-preview
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: firefox-preview
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: actual-pilot-probes
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kubevirt
+      podSelector:
+        matchLabels:
+          kubevirt.io: virt-api
+    ports:
+    - port: 11052
+      protocol: TCP

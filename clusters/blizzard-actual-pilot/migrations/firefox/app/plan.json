@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "firefox",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "firefox-preview",
+  "freshDisks": [
+    "root",
+    "data",
+    "containers",
+    "downloads"
+  ],
+  "profile": {
+    "id": "firefox",
+    "legacyVm": "firefox",
+    "namespace": "firefox-preview",
+    "cpu": 4,
+    "memoryMiB": 4096,
+    "port": 11052,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 10240,
+        "mountPoint": "/var/lib/firefox",
+        "legacyImage": "firefox-state.img",
+        "sources": [
+          {
+            "path": "vms/firefox.nix",
+            "line": 28
+          }
+        ]
+      },
+      {
+        "name": "containers",
+        "sizeMiB": 4096,
+        "mountPoint": "/var/lib/containers",
+        "legacyImage": "containers-storage.img",
+        "sources": [
+          {
+            "path": "vms/firefox.nix",
+            "line": 33
+          }
+        ]
+      },
+      {
+        "name": "downloads",
+        "sizeMiB": 524288,
+        "mountPoint": "/home/admin/Downloads",
+        "legacyImage": "firefox-downloads.img",
+        "sources": [
+          {
+            "path": "vms/firefox.nix",
+            "line": 38
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/mkMicrovmConfig.nix",
+            "line": 33
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/firefox.nix",
+      "modules/services/firefox.nix",
+      "lib/linuxserver-browser.nix",
+      "vms/media-storage.nix",
+      "vms/microvm-network-defaults.nix",
+      "modules/services/nfs.nix",
+      "hosts/blizzard/storage/nfs.nix",
+      "vms/sops-base.nix",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [
+      {
+        "protocol": "nfs",
+        "source_host_role": "Blizzard MicroVM gateway",
+        "source_path": "/rpool/unenc/media/data",
+        "mount_point": "/data",
+        "read_only_declared": false,
+        "provenance": [
+          {
+            "path": "vms/firefox.nix",
+            "line": 100
+          },
+          {
+            "path": "vms/media-storage.nix",
+            "line": 2
+          },
+          {
+            "path": "modules/services/nfs.nix",
+            "line": 68
+          }
+        ],
+        "derivation_note": "NFS export/target derive from mediaStorage; rw is NFS module default. This is not an extra virtiofs share."
+      }
+    ],
+    "dependencies": [
+      {
+        "kind": "vpn",
+        "detail": "Default gateway uses WireGuard VM; explicit LAN/shared-bridge return routes come from vpnReturnRoutes.",
+        "provenance": [
+          {
+            "path": "vms/firefox.nix"
+          },
+          {
+            "path": "vms/vm-registry.nix"
+          },
+          {
+            "path": "vms/microvm-network-defaults.nix"
+          }
+        ]
+      },
+      {
+        "kind": "container",
+        "detail": "Quadlet/Podman LinuxServer Firefox: profile maps to /config and dedicated Downloads maps to /downloads. Profile UID 911 remains separate from admin UID 1000; shared transfer GID is 1000.",
+        "provenance": [
+          {
+            "path": "vms/firefox.nix"
+          },
+          {
+            "path": "modules/services/firefox.nix"
+          },
+          {
+            "path": "lib/linuxserver-browser.nix"
+          }
+        ]
+      },
+      {
+        "kind": "credentials",
+        "detail": "Browser username/password SOPS declarations order credentials before startup.",
+        "provenance": [
+          {
+            "path": "vms/firefox.nix"
+          },
+          {
+            "path": "vms/sops-base.nix"
+          },
+          {
+            "path": "lib/linuxserver-browser.nix"
+          }
+        ]
+      },
+      {
+        "kind": "host-nfs",
+        "detail": "Host NFS server enabled; checked public exports block is commented and module default is empty. Working export cannot be assumed.",
+        "provenance": [
+          {
+            "path": "hosts/blizzard/storage/nfs.nix"
+          },
+          {
+            "path": "modules/services/nfs.nix"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Choose/pin an immutable browser image and implement guest credentials and private browser isolation.",
+      "Design WireGuard egress and fail-closed reconnect/reboot/leak acceptance with required return routes.",
+      "Prove NFS availability, transfer ownership and exact path parity; plan capacity for explicit 512 GiB Downloads image.",
+      "Validate stopped independent profile/container/downloads restore and retain separate profile/transfer identities."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Choose/pin an immutable browser image and implement guest credentials and private browser isolation.",
+    "Design WireGuard egress and fail-closed reconnect/reboot/leak acceptance with required return routes.",
+    "Prove NFS availability, transfer ownership and exact path parity; plan capacity for explicit 512 GiB Downloads image.",
+    "Validate stopped independent profile/container/downloads restore and retain separate profile/transfer identities."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}

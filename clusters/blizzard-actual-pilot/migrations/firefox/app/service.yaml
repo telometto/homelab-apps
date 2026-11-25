@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: firefox-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: firefox-preview
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: firefox-preview
+  ports:
+  - name: primary
+    port: 11052
+    protocol: TCP
+    targetPort: 11052
