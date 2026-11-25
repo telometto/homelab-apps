@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: jellyfin-preview
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: jellyfin-preview
+  ports:
+  - name: primary
+    port: 8096
+    protocol: TCP
+    targetPort: 8096

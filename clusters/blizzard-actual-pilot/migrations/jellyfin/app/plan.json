@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "jellyfin",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "jellyfin-preview",
+  "freshDisks": [
+    "root",
+    "data",
+    "cache"
+  ],
+  "profile": {
+    "id": "jellyfin",
+    "legacyVm": "jellyfin",
+    "namespace": "jellyfin-preview",
+    "cpu": 8,
+    "memoryMiB": 16384,
+    "port": 8096,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 131072,
+        "mountPoint": "/var/lib/jellyfin",
+        "legacyImage": "jellyfin-state.img",
+        "sources": [
+          {
+            "path": "vms/jellyfin.nix",
+            "line": 52
+          }
+        ]
+      },
+      {
+        "name": "cache",
+        "sizeMiB": 131072,
+        "mountPoint": "/var/cache/jellyfin",
+        "legacyImage": "jellyfin-cache.img",
+        "sources": [
+          {
+            "path": "vms/jellyfin.nix",
+            "line": 57
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/mkMicrovmConfig.nix",
+            "line": 33
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/jellyfin.nix",
+      "vms/jellyfin-settings.nix",
+      "modules/services/jellyfin.nix",
+      "hosts/blizzard/services/media.nix",
+      "lib/jellyfin-vps-firewall.nix",
+      "docs/jellyfin-vps.md",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [
+      {
+        "protocol": "virtiofs",
+        "source_path": "/rpool/unenc/media/data/media",
+        "mount_point": "/rpool/unenc/media/data/media",
+        "tag": "jellyfin-media",
+        "read_only_declared": true,
+        "provenance": [
+          {
+            "path": "vms/jellyfin.nix",
+            "line": 19
+          },
+          {
+            "path": "vms/jellyfin.nix",
+            "line": 65
+          }
+        ]
+      },
+      {
+        "protocol": "virtiofs",
+        "source_path": "/var/lib/jellyfin",
+        "mount_point": "/mnt/host-jellyfin",
+        "tag": "jellyfin-host-state",
+        "read_only_declared": true,
+        "currently_selected_by_public_source": false,
+        "condition": "!jellyfinSettings.vmServiceReady",
+        "provenance": [
+          {
+            "path": "vms/jellyfin.nix",
+            "line": 70
+          },
+          {
+            "path": "vms/jellyfin-settings.nix",
+            "line": 4
+          }
+        ],
+        "derivation_note": "Staged import share selected only when vmServiceReady=false; current public setting is true."
+      }
+    ],
+    "dependencies": [
+      {
+        "kind": "service-location",
+        "detail": "Public vmServiceReady=true enables guest Jellyfin and disables host Jellyfin; runtime location was not inspected.",
+        "provenance": [
+          {
+            "path": "vms/jellyfin-settings.nix"
+          },
+          {
+            "path": "vms/jellyfin.nix"
+          },
+          {
+            "path": "hosts/blizzard/services/media.nix"
+          }
+        ]
+      },
+      {
+        "kind": "devices",
+        "detail": "GPU passthrough and hardware acceleration disabled; no PCI functions declared.",
+        "provenance": [
+          {
+            "path": "vms/jellyfin-settings.nix"
+          },
+          {
+            "path": "vms/jellyfin.nix"
+          }
+        ]
+      },
+      {
+        "kind": "ingress",
+        "detail": "Separate direct LAN host TCP 11072 forward to guest 8096 and guarded Tailscale/VPS relay; no local Traefik/Tunnel publication.",
+        "provenance": [
+          {
+            "path": "hosts/blizzard/virtualisation/microvms.nix"
+          },
+          {
+            "path": "hosts/blizzard/services/media.nix"
+          },
+          {
+            "path": "docs/jellyfin-vps.md"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Confirm actual service/state location before planning transfer; public setting alone is not live evidence.",
+      "Validate independent stopped state/cache restore, read-only media path parity, capacity and private administrator setup.",
+      "Keep CPU-only behavior until any requested GPU passthrough has separate device/driver/IOMMU acceptance.",
+      "Prove direct-play/transcode capacity, LAN source preservation and guarded VPS/WebSocket ingress before cutover."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Confirm actual service/state location before planning transfer; public setting alone is not live evidence.",
+    "Validate independent stopped state/cache restore, read-only media path parity, capacity and private administrator setup.",
+    "Keep CPU-only behavior until any requested GPU passthrough has separate device/driver/IOMMU acceptance.",
+    "Prove direct-play/transcode capacity, LAN source preservation and guarded VPS/WebSocket ingress before cutover."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}
