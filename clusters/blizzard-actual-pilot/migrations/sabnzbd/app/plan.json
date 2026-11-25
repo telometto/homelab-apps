@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "sabnzbd",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "sabnzbd-preview",
+  "freshDisks": [
+    "root",
+    "data"
+  ],
+  "profile": {
+    "id": "sabnzbd",
+    "legacyVm": "sabnzbd",
+    "namespace": "sabnzbd-preview",
+    "cpu": 1,
+    "memoryMiB": 1024,
+    "port": 11031,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 10240,
+        "mountPoint": "/var/lib/sabnzbd",
+        "legacyImage": "sabnzbd-state.img",
+        "sources": [
+          {
+            "path": "vms/sabnzbd.nix",
+            "line": 17
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/mkMicrovmConfig.nix",
+            "line": 33
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/sabnzbd.nix",
+      "modules/services/sabnzbd.nix",
+      "vms/media-storage.nix",
+      "vms/microvm-network-defaults.nix",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [
+      {
+        "protocol": "virtiofs",
+        "source_path": "/rpool/unenc/media/data",
+        "mount_point": "/data",
+        "tag": "media-data",
+        "read_only_declared": null,
+        "provenance": [
+          {
+            "path": "vms/sabnzbd.nix",
+            "line": 21
+          },
+          {
+            "path": "vms/media-storage.nix",
+            "line": 2
+          }
+        ],
+        "derivation_note": "Imported mediaStorage.share. No readOnly attribute is declared."
+      }
+    ],
+    "dependencies": [
+      {
+        "kind": "vpn",
+        "detail": "WireGuard gateway/DNS and explicit LAN/shared-bridge return routes.",
+        "provenance": [
+          {
+            "path": "vms/vm-registry.nix"
+          },
+          {
+            "path": "vms/sabnzbd.nix"
+          },
+          {
+            "path": "vms/microvm-network-defaults.nix"
+          }
+        ]
+      },
+      {
+        "kind": "media",
+        "detail": "Shared /data paths, primary users group, supplementary private group, umask 002.",
+        "provenance": [
+          {
+            "path": "vms/sabnzbd.nix"
+          },
+          {
+            "path": "modules/services/sabnzbd.nix"
+          },
+          {
+            "path": "vms/media-storage.nix"
+          }
+        ]
+      },
+      {
+        "kind": "credentials-ingress",
+        "detail": "Provider/API settings are private application state; host WebUI TCP forward and sabnzbd-ui managed publication.",
+        "provenance": [
+          {
+            "path": "modules/services/sabnzbd.nix"
+          },
+          {
+            "path": "hosts/blizzard/virtualisation/microvms.nix"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Deliver provider/API configuration privately and prove queue/config state via independent stopped restore.",
+      "Prove incomplete/temporary/complete download capacity, media ownership and Arr category/import behavior with disposable content.",
+      "Design controlled VPN egress and prove DNS/leak/reconnect/reboot behavior and private return routes.",
+      "Validate private UI/authentication and publication before route/data cutover."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Deliver provider/API configuration privately and prove queue/config state via independent stopped restore.",
+    "Prove incomplete/temporary/complete download capacity, media ownership and Arr category/import behavior with disposable content.",
+    "Design controlled VPN egress and prove DNS/leak/reconnect/reboot behavior and private return routes.",
+    "Validate private UI/authentication and publication before route/data cutover."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}
