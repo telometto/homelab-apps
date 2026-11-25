@@ -1,0 +1,81 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: sonarr-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: sonarr-preview
+  labels:
+    app.kubernetes.io/name: sonarr-preview
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sonarr-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 1
+        memory:
+          guest: 1024Mi
+        resources:
+          requests:
+            memory: 1024Mi
+            cpu: 250m
+          limits:
+            memory: 1536Mi
+            cpu: '1'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: gwad172082f8db0b3ccc
+          - name: data
+            disk:
+              bus: virtio
+            serial: gwfbe6723a015248484f
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: gw67dd261a1bc059fffe
+          - name: cloudinit
+            disk:
+              bus: virtio
+            serial: gwd7f93f1e01dbace832
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: primary
+              port: 11021
+              protocol: TCP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: sonarr-preview-root
+      - name: data
+        dataVolume:
+          name: sonarr-preview-data
+      - name: desired-config
+        configMap:
+          name: sonarr-preview-desired
+          volumeLabel: GROUNDCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: sonarr-preview-cloudinit
+      readinessProbe:
+        exec:
+          command:
+          - /usr/bin/false
+        initialDelaySeconds: 15
+        periodSeconds: 10
