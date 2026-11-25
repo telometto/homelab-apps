@@ -1,0 +1,95 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: firefox-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: firefox-preview
+  labels:
+    app.kubernetes.io/name: firefox-preview
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: firefox-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 4
+        memory:
+          guest: 4096Mi
+        resources:
+          requests:
+            memory: 4096Mi
+            cpu: 250m
+          limits:
+            memory: 4608Mi
+            cpu: '4'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: gwf86b9212fa223c598a
+          - name: data
+            disk:
+              bus: virtio
+            serial: gw8bbeb36e761a690caf
+          - name: containers
+            disk:
+              bus: virtio
+            serial: gw39874abb3eebedb711
+          - name: downloads
+            disk:
+              bus: virtio
+            serial: gwd86c399af030b5ad55
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: gw6be7825e6241e43e5c
+          - name: cloudinit
+            disk:
+              bus: virtio
+            serial: gwe9f02c493f8974569f
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: primary
+              port: 11052
+              protocol: TCP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: firefox-preview-root
+      - name: data
+        dataVolume:
+          name: firefox-preview-data
+      - name: containers
+        dataVolume:
+          name: firefox-preview-containers
+      - name: downloads
+        dataVolume:
+          name: firefox-preview-downloads
+      - name: desired-config
+        configMap:
+          name: firefox-preview-desired
+          volumeLabel: GROUNDCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: firefox-preview-cloudinit
+      readinessProbe:
+        exec:
+          command:
+          - /usr/bin/false
+        initialDelaySeconds: 15
+        periodSeconds: 10
