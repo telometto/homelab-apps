@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pocket-id-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: pocket-id-preview
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: pocket-id-preview
+  ports:
+  - name: primary
+    port: 11081
+    protocol: TCP
+    targetPort: 11081

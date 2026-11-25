@@ -1,0 +1,81 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: pocket-id-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: pocket-id-preview
+  labels:
+    app.kubernetes.io/name: pocket-id-preview
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pocket-id-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 1
+        memory:
+          guest: 1024Mi
+        resources:
+          requests:
+            memory: 1024Mi
+            cpu: 250m
+          limits:
+            memory: 1536Mi
+            cpu: '1'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: gwf0146f52503fc5d69e
+          - name: data
+            disk:
+              bus: virtio
+            serial: gw81d1ecd2b3a8da6704
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: gw08fecb39de820ef25e
+          - name: cloudinit
+            disk:
+              bus: virtio
+            serial: gw73962ec97de1cbc5e5
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: primary
+              port: 11081
+              protocol: TCP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: pocket-id-preview-root
+      - name: data
+        dataVolume:
+          name: pocket-id-preview-data
+      - name: desired-config
+        configMap:
+          name: pocket-id-preview-desired
+          volumeLabel: GROUNDCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: pocket-id-preview-cloudinit
+      readinessProbe:
+        exec:
+          command:
+          - /usr/bin/false
+        initialDelaySeconds: 15
+        periodSeconds: 10
