@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "serviceId": "seerr",
+  "runtimeReady": false,
+  "status": "unimplemented-groundwork",
+  "namespace": "seerr-preview",
+  "freshDisks": [
+    "root",
+    "data"
+  ],
+  "profile": {
+    "id": "seerr",
+    "legacyVm": "overseerr",
+    "namespace": "seerr-preview",
+    "cpu": 1,
+    "memoryMiB": 1024,
+    "port": 11040,
+    "protocol": "TCP",
+    "rootSizeMiB": 20480,
+    "stateVolumes": [
+      {
+        "name": "data",
+        "sizeMiB": 10240,
+        "mountPoint": "/var/lib/overseerr",
+        "legacyImage": "overseerr-state.img",
+        "sources": [
+          {
+            "path": "vms/overseerr.nix",
+            "line": 17
+          }
+        ]
+      }
+    ],
+    "legacyPersist": [
+      {
+        "image": "persist.img",
+        "mount_point": "/persist",
+        "size_mib": 64,
+        "size_is_explicit": true,
+        "provenance": [
+          {
+            "path": "vms/mkMicrovmConfig.nix",
+            "line": 33
+          }
+        ],
+        "derivation_note": "Appended by mkMicrovmConfig; storage helpers can explicitly supply the same persist layout."
+      }
+    ],
+    "sources": [
+      "vms/overseerr.nix",
+      "modules/services/seerr.nix",
+      "docs/seerr.md",
+      "vms/base.nix",
+      "vms/mkMicrovmConfig.nix",
+      "vms/vm-registry.nix",
+      "vms/flake-microvms.nix",
+      "hosts/blizzard/virtualisation/microvms.nix",
+      "lib/constants.nix"
+    ],
+    "externalShares": [],
+    "dependencies": [
+      {
+        "kind": "legacy-identity",
+        "detail": "seerr.service uses static seerr account; registry/output/state stay overseerr, overseerr-vm and /var/lib/overseerr.",
+        "provenance": [
+          {
+            "path": "vms/overseerr.nix"
+          },
+          {
+            "path": "docs/seerr.md"
+          }
+        ]
+      },
+      {
+        "kind": "api-ingress",
+        "detail": "Sonarr/Radarr API peers and requests publication; current compatibility policy name remains plex-compatible.",
+        "provenance": [
+          {
+            "path": "hosts/blizzard/virtualisation/microvms.nix"
+          },
+          {
+            "path": "docs/seerr.md"
+          }
+        ]
+      }
+    ],
+    "gates": [
+      "Preserve existing schema/version transition, legacy state path and static ownership; test an independent stopped state copy.",
+      "Configure/test the intended Jellyfin integration after leaving Plex; public declaration does not establish runtime media-server integration.",
+      "Deliver private Sonarr/Radarr credentials and validate request/history/notification workflows without duplicate writers.",
+      "Retain complete pre-migration state rollback; executable rollback cannot reverse database migrations."
+    ]
+  },
+  "gates": [
+    "Fresh preview disks only; do not copy/mount/adopt/mutate production application state as groundwork.",
+    "Host registry disabled, Flux storage/app layers suspended and VM halted until separate reviewed rollout.",
+    "Implement guest image/provisioning, private credentials and narrow network/storage policies before claiming runtime readiness.",
+    "Real CDI import, KubeVirt launch, Flux reconciliation, persistence and Git stop/start/update rollback require separately authorized live acceptance.",
+    "Assess activation against actual running generation and preserve production MicroVM rollback. No merge/activation/restart/reboot/apply authorized by this inventory.",
+    "Off-host backup implementation is deferred; revisit independent backup/restore before production-state migration or MicroVM retirement.",
+    "Preserve existing schema/version transition, legacy state path and static ownership; test an independent stopped state copy.",
+    "Configure/test the intended Jellyfin integration after leaving Plex; public declaration does not establish runtime media-server integration.",
+    "Deliver private Sonarr/Radarr credentials and validate request/history/notification workflows without duplicate writers.",
+    "Retain complete pre-migration state rollback; executable rollback cannot reverse database migrations."
+  ],
+  "storageNotes": [
+    "All proposed state PVCs are fresh and blank; source images/mounts are provenance only.",
+    "Legacy /persist identity/credentials are not copied; the fresh retained root holds new guest OS state until a per-service identity design is approved.",
+    "External media/NFS/virtiofs paths are not mounted by groundwork.",
+    "Sizes mirror declared budgets, not observed usage. Review free space, filesystem overhead and restore needs before resuming storage."
+  ]
+}

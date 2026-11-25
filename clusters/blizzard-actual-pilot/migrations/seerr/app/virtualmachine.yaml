@@ -1,0 +1,81 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: seerr-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+  namespace: seerr-preview
+  labels:
+    app.kubernetes.io/name: seerr-preview
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: seerr-preview
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: blizzard
+      terminationGracePeriodSeconds: 120
+      domain:
+        cpu:
+          cores: 1
+        memory:
+          guest: 1024Mi
+        resources:
+          requests:
+            memory: 1024Mi
+            cpu: 250m
+          limits:
+            memory: 1536Mi
+            cpu: '1'
+        devices:
+          disks:
+          - name: root
+            disk:
+              bus: virtio
+            serial: gwaeb8ecc65ef227d010
+          - name: data
+            disk:
+              bus: virtio
+            serial: gw837a813a9f73f49140
+          - name: desired-config
+            disk:
+              bus: virtio
+              readonly: true
+            serial: gwea5e8c7907d21c1fd5
+          - name: cloudinit
+            disk:
+              bus: virtio
+            serial: gw66c261a02925bd5d75
+          interfaces:
+          - name: default
+            masquerade: {}
+            ports:
+            - name: primary
+              port: 11040
+              protocol: TCP
+      networks:
+      - name: default
+        pod: {}
+      volumes:
+      - name: root
+        dataVolume:
+          name: seerr-preview-root
+      - name: data
+        dataVolume:
+          name: seerr-preview-data
+      - name: desired-config
+        configMap:
+          name: seerr-preview-desired
+          volumeLabel: GROUNDCFG
+      - name: cloudinit
+        cloudInitNoCloud:
+          secretRef:
+            name: seerr-preview-cloudinit
+      readinessProbe:
+        exec:
+          command:
+          - /usr/bin/false
+        initialDelaySeconds: 15
+        periodSeconds: 10
