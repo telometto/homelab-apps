@@ -530,9 +530,16 @@ class GroundworkManifestTests(unittest.TestCase):
             )
             if o["kind"] == "VirtualMachine"
         ]
+        # The common base has no optional Searx implementation. Its own
+        # service branch registers it; require it exactly when that layer exists.
+        optional = (
+            ["searx-preview"]
+            if any(layer["metadata"]["name"] == "pilot-searx" for layer in layers)
+            else []
+        )
         self.assertCountEqual(
             [v["metadata"]["namespace"] for v in fleet],
-            ["actual-pilot", "searx-preview"] + [s + "-preview" for s in IDS],
+            ["actual-pilot"] + optional + [s + "-preview" for s in IDS],
         )
 
     def test_generated_custom_resources_and_flux_layers_match_pinned_schemas(self):
