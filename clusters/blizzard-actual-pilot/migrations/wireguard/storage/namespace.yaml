@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wireguard-preview
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
