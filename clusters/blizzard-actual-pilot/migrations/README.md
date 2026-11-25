@@ -4,7 +4,9 @@ The sixteen service directories are reservation slots on the foundation branch.
 Their empty Kustomizations build successfully. Each pair is registered in
 [`../migration-layers.yaml`](../migration-layers.yaml) with `suspend: true` and
 `prune: false`; registering an empty slot is not an application implementation.
-Actual and the separate SearxNG preview retain their existing contracts.
+Actual remains the accepted reference on the common base. SearxNG and every
+other service implementation remain on independent service branches; no optional
+service is inherited merely by choosing this common base.
 
 [`catalog.json`](catalog.json) is the byte-identical public catalog shared with
 `nix-config/lib/kubevirt-groundwork/catalog.json`. It records declaration
@@ -13,6 +15,12 @@ state/shares and outstanding gates. Legacy paths are planning metadata only.
 Catalog fields do not establish live service status, measured disk use or
 completed runtime support. Seerr preserves legacy `overseerr` state identity;
 Tautulli and disabled registry entries are outside this batch.
+
+The common umbrella is #14, head `dev/kubevirt-groundwork`, targeting `main`.
+All application service PRs, including SearxNG #13, target that common head.
+The host counterpart is #5894: service PRs target its actual head `dev-kubevirt`;
+canonical `dev/kubevirt` stays synchronized. The umbrellas remain unmerged to
+main, and service selection is independent.
 
 From a service branch based on `dev/kubevirt-groundwork`, populate its owned slot:
 
